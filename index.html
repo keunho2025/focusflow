@@ -830,10 +830,10 @@
                 <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(330 100 100)" />
 
                 <!-- Minute hand (blue, thick) -->
-                <line id="minute-hand" x1="100" y1="100" x2="100" y2="30" stroke="#3fb8d4" stroke-width="4" stroke-linecap="round" style="transform-origin: 100px 100px;" />
+                <line id="minute-hand" x1="100" y1="100" x2="100" y2="30" stroke="#3fb8d4" stroke-width="4" stroke-linecap="round" />
 
                 <!-- Second hand (red, thin) -->
-                <line id="second-hand" x1="100" y1="100" x2="100" y2="25" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" style="transform-origin: 100px 100px;" />
+                <line id="second-hand" x1="100" y1="100" x2="100" y2="25" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" />
 
                 <!-- Center dot -->
                 <circle cx="100" cy="100" r="5" fill="#333" />
@@ -1037,14 +1037,13 @@
       const seconds = state.timer.seconds % 60;
       const secondRotation = (seconds / 60) * 360;
 
+      // Use SVG transform attribute for proper rotation around center point
       if (minuteHand) {
-        minuteHand.style.transition = 'transform 0.3s ease-out';
-        minuteHand.style.transform = `rotate(${minuteRotation}deg)`;
+        minuteHand.setAttribute('transform', `rotate(${minuteRotation} 100 100)`);
       }
 
       if (secondHand) {
-        secondHand.style.transition = 'transform 0.1s linear';
-        secondHand.style.transform = `rotate(${secondRotation}deg)`;
+        secondHand.setAttribute('transform', `rotate(${secondRotation} 100 100)`);
       }
     }
 
