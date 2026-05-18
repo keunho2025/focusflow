@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎯 FocusFlow - Timeline Schedule Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #b3e5fc 0%, #81d4fa 25%, #a5d6ff 50%, #80deea 75%, #4dd0e1 100%);
+      color: #333;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: inherit;
+      position: relative;
+    }
+
+    @media (min-width: 768px) {
+      body { padding: 32px 0; }
+      .container {
+        min-height: calc(100vh - 64px);
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        margin-bottom: 32px;
+      }
+    }
+
+    /* ─── Header ─── */
+    .header {
+      padding: 24px 24px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, #b3e5fc 0%, #81d4fa 25%, #a5d6ff 50%, #80deea 75%, #4dd0e1 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a5f7a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-icons {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .header-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .header-icon:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* ─── Title Section ─── */
+    .title-section {
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #2a5a7a;
+      margin: 0;
+    }
+
+    .date-label {
+      font-size: 12px;
+      color: #4a7a8a;
+      font-weight: 600;
+    }
+
+    /* ─── Main Content ─── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 24px 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-top: 16px;
+    }
+
+    /* ─── Home Screen (Timer) ─── */
+    .timer-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 40px 0;
+    }
+
+    .timer-circle {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      border: 8px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .timer-display {
+      font-size: 56px;
+      font-weight: 700;
+      color: #1a5f7a;
+      font-family: 'Courier New', monospace;
+      line-height: 1;
+    }
+
+    .timer-label {
+      font-size: 12px;
+      color: #4a7a8a;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .focusing-task {
+      text-align: center;
+      color: #2a5a7a;
+    }
+
+    .focusing-label {
+      font-size: 11px;
+      color: #4a7a8a;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .task-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a5f7a;
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 16px;
+    }
+
+    .btn-control {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 0;
+      background: white;
+      color: #1a5f7a;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
+      font-weight: 700;
+    }
+
+    .btn-control:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-control:active {
+      transform: scale(0.95);
+    }
+
+    .mode-select {
+      width: 100%;
+      max-width: 280px;
+      padding: 12px 20px;
+      border-radius: 24px;
+      border: 0;
+      background: white;
+      color: #2a5a7a;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .mode-select:focus {
+      outline: 2px solid rgba(26, 95, 122, 0.3);
+      outline-offset: 2px;
+    }
+
+    /* ─── Dashboard Cards ─── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+      }
+    }
+
+    .dashboard-card {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #4a7a8a;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .card-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .card-stat-label {
+      font-size: 13px;
+      color: #2a5a7a;
+      font-weight: 600;
+    }
+
+    .card-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #3fb8d4;
+    }
+
+    .category-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      padding: 6px 0;
+    }
+
+    .category-item-label {
+      color: #2a5a7a;
+    }
+
+    .category-count {
+      background: #f0f8fa;
+      color: #2a5a7a;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .completed-list {
+      max-height: 128px;
+      overflow-y: auto;
+      space: 8px;
+    }
+
+    .completed-item {
+      font-size: 12px;
+      color: #4a7a8a;
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .timer-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .timer-display-large {
+      font-size: 48px;
+      font-weight: 700;
+      color: white;
+      font-family: 'Courier New', monospace;
+      line-height: 1;
+    }
+
+    .current-task-box {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 16px;
+      border-radius: 12px;
+      width: 100%;
+    }
+
+    .current-task-name {
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .mode-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      width: 100%;
+      max-width: 240px;
+    }
+
+    .mode-btn {
+      padding: 8px 6px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      background: white;
+      color: #2a5a7a;
+      border-color: white;
+    }
+
+    .mode-btn:hover:not([disabled]) {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .mode-btn[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ─── Tasks Screen (Timeline) ─── */
+    /* ─── Category Filter ─── */
+    .category-filter {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 12px;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+
+    .category-btn {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .category-btn.active {
+      background: #2a5a7a;
+      color: white;
+      border-color: #2a5a7a;
+    }
+
+    /* ─── Input Section ─── */
+    .input-section {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 12px;
+      border-radius: 12px;
+      flex-wrap: wrap;
+    }
+
+    .input-section input[type="text"],
+    .input-section input[type="date"],
+    .input-section select {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      color: #333;
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .input-section input[type="text"] {
+      flex: 2;
+    }
+
+    .input-section input:focus,
+    .input-section select:focus {
+      border-color: #4dd0e1;
+      box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.1);
+    }
+
+    .btn-add {
+      padding: 10px 16px;
+      background: #3fb8d4;
+      color: white;
+      border: 0;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-add:hover {
+      background: #35a5c1;
+    }
+
+    .timeline-header {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 12px;
+      color: #4a7a8a;
+    }
+
+    .timeline-task-name {
+      width: 120px;
+      flex-shrink: 0;
+      padding-right: 8px;
+    }
+
+    .timeline-dates {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .timeline-date {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      border-radius: 4px;
+    }
+
+    .timeline-date.today {
+      background: #3fb8d4;
+      color: white;
+      border-radius: 50%;
+      font-weight: 700;
+    }
+
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 8px;
+    }
+
+    .timeline-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .timeline-item-name {
+      width: 120px;
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: #2a5a7a;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .timeline-bar-container {
+      flex: 1;
+      height: 32px;
+      background: #f0f8fa;
+      border-radius: 4px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .timeline-bar {
+      height: 24px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #4dd0e1, #3fb8d4);
+      position: relative;
+      min-width: 20px;
+    }
+
+    .timeline-bar.overdue {
+      background: linear-gradient(90deg, #ff6b6b, #ff5252);
+    }
+
+    .timeline-bar.today {
+      background: linear-gradient(90deg, #3fb8d4, #2a9ccc);
+    }
+
+    .timeline-due-date {
+      width: 50px;
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 11px;
+      font-weight: 600;
+      color: #4a7a8a;
+    }
+
+    .timeline-pomodoro {
+      font-size: 11px;
+      background: rgba(77, 208, 225, 0.15);
+      color: #1a5f7a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      font-weight: 600;
+    }
+
+    .btn-delete {
+      width: 24px;
+      height: 24px;
+      border: 0;
+      background: transparent;
+      color: #ff6b6b;
+      cursor: pointer;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* ─── Stats Screen ─── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card.sessions {
+      background: rgba(135, 206, 250, 0.2);
+    }
+
+    .stat-card.focus {
+      background: rgba(144, 238, 144, 0.2);
+    }
+
+    .stat-card.streak {
+      background: rgba(255, 215, 0, 0.2);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #4a7a8a;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a5f7a;
+    }
+
+    .chart-container {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2a5a7a;
+      margin-bottom: 4px;
+    }
+
+    .chart-summary {
+      font-size: 12px;
+      color: #4a7a8a;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .chart-bars {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      height: 120px;
+      align-items: flex-end;
+    }
+
+    .chart-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      gap: 4px;
+    }
+
+    .bar {
+      width: 100%;
+      background: linear-gradient(180deg, #4dd0e1, #3fb8d4);
+      border-radius: 4px 4px 0 0;
+      flex: 1;
+      min-height: 4px;
+      transition: all 0.3s;
+    }
+
+    .bar.empty {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .bar.today {
+      background: linear-gradient(180deg, #3fb8d4, #2a9ccc);
+      box-shadow: 0 0 8px rgba(63, 184, 212, 0.4);
+    }
+
+    .bar-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #4a7a8a;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── Bottom Navigation ─── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 480px;
+      width: 100%;
+      display: flex;
+      background: rgba(74, 122, 138, 0.8);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    }
+
+    .nav-btn {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .nav-btn.active {
+      color: white;
+    }
+
+    .nav-btn:hover:not(.active) {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    /* ─── Empty State ─── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #4a7a8a;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">🎯 FocusFlow</div>
+      <div class="header-icons">
+        <div class="header-icon">⭕</div>
+        <div class="header-icon">🔴</div>
+        <div class="header-icon">🟢</div>
+        <div class="header-icon">🟡</div>
+        <div class="header-icon">🔔</div>
+      </div>
+    </div>
+
+    <!-- Title Section -->
+    <div class="title-section">
+      <h1 class="page-title" id="page-title">Today</h1>
+      <span class="date-label" id="date-label">—</span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+      <!-- Home Screen - 2 Column Dashboard -->
+      <div id="screen-home" class="screen active">
+        <div class="dashboard">
+          <!-- LEFT COLUMN -->
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- Today's Stats -->
+            <div class="dashboard-card">
+              <div class="card-title">📊 Today's Progress</div>
+              <div style="space-y: 12px;">
+                <div class="card-stat">
+                  <span class="card-stat-label">Sessions</span>
+                  <span class="card-stat-value" id="dashboard-sessions">0</span>
+                </div>
+                <div class="card-stat">
+                  <span class="card-stat-label">Focus Time</span>
+                  <span class="card-stat-value" id="dashboard-focus" style="color: #059669;">0m</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="dashboard-card">
+              <div class="card-title">📂 By Category</div>
+              <div id="category-breakdown" style="space-y: 8px;">
+                <!-- Generated by JS -->
+              </div>
+            </div>
+
+            <!-- Completed Today -->
+            <div class="dashboard-card" id="completed-section" style="display: none;">
+              <div class="card-title">✓ Completed (0)</div>
+              <div class="completed-list" id="completed-summary">
+                <!-- Generated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN - Timer -->
+          <div class="timer-column">
+            <!-- Timer Display - Analog Clock -->
+            <div class="timer-circle" style="width: 160px; height: 160px; position: relative;">
+              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%; display: block;">
+                <!-- Clock face background -->
+                <circle cx="100" cy="100" r="95" fill="white" stroke="#ddd" stroke-width="2" />
+
+                <!-- Hour markers -->
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(30 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(60 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(90 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(120 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(150 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(180 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(210 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(240 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(270 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(300 100 100)" />
+                <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="2" transform="rotate(330 100 100)" />
+
+                <!-- Minute hand (blue, thick) -->
+                <line id="minute-hand" x1="100" y1="100" x2="100" y2="30" stroke="#3fb8d4" stroke-width="4" stroke-linecap="round" style="transform-origin: 100px 100px;" />
+
+                <!-- Second hand (red, thin) -->
+                <line id="second-hand" x1="100" y1="100" x2="100" y2="25" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" style="transform-origin: 100px 100px;" />
+
+                <!-- Center dot -->
+                <circle cx="100" cy="100" r="5" fill="#333" />
+              </svg>
+
+              <!-- Time display and mode label overlay -->
+              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10; flex-direction: column; gap: 4px;">
+                <span class="timer-display-large" id="timer-display">25:00</span>
+                <span style="font-size: 10px; color: white; font-weight: 700; letter-spacing: 1px;" id="timer-mode-label">POMODORO</span>
+              </div>
+            </div>
+
+            <!-- Current Task -->
+            <div class="current-task-box">
+              <div class="focusing-label" style="color: rgba(255,255,255,0.7); margin-bottom: 4px;">FOCUSING ON</div>
+              <div class="current-task-name" id="current-task">할 일을 선택하세요</div>
+            </div>
+
+            <!-- Controls -->
+            <div class="timer-controls">
+              <button class="btn-control" id="btn-start" title="시작/일시정지">▶</button>
+              <button class="btn-control" id="btn-reset" title="초기화">↻</button>
+            </div>
+
+            <!-- Mode Buttons -->
+            <div class="mode-buttons">
+              <button class="mode-btn active" data-mode="focus" id="mode-focus">Focus</button>
+              <button class="mode-btn" data-mode="short" id="mode-short">Break</button>
+              <button class="mode-btn" data-mode="long" id="mode-long">Long</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks Screen -->
+      <div id="screen-tasks" class="screen">
+        <!-- Category Filter -->
+        <div class="category-filter" id="category-filter">
+          <button class="category-btn active" data-category="all">All</button>
+          <button class="category-btn" data-category="work">🏢 Work</button>
+          <button class="category-btn" data-category="project">💡 Project</button>
+          <button class="category-btn" data-category="personal">🎯 Personal</button>
+          <button class="category-btn" data-category="learning">📚 Learning</button>
+          <button class="category-btn" data-category="health">💪 Health</button>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+          <input type="text" id="task-input" placeholder="새 할 일..." />
+          <input type="date" id="task-date" />
+          <select id="task-category">
+            <option value="personal">🎯 Personal</option>
+            <option value="work">🏢 Work</option>
+            <option value="project">💡 Project</option>
+            <option value="learning">📚 Learning</option>
+            <option value="health">💪 Health</option>
+          </select>
+          <select id="task-priority">
+            <option value="medium">🟡 Medium</option>
+            <option value="low">🟢 Low</option>
+            <option value="high">🟠 High</option>
+            <option value="urgent">🔴 Urgent</option>
+          </select>
+          <button class="btn-add" id="btn-add">+</button>
+        </div>
+
+        <div class="timeline-header">
+          <div class="timeline-task-name">Task</div>
+          <div class="timeline-dates" style="flex: 1; display: grid; grid-template-columns: repeat(31, 1fr); gap: 2px;">
+            <div id="timeline-header-dates"></div>
+          </div>
+          <div style="width: 50px;"></div>
+        </div>
+
+        <div id="timeline-list" style="display: flex; flex-direction: column; gap: 4px;">
+          <!-- Timeline items will be inserted here -->
+        </div>
+
+        <div id="empty-state" class="empty-state">할 일을 추가해보세요! 📝</div>
+      </div>
+
+      <!-- Stats Screen -->
+      <div id="screen-stats" class="screen">
+        <div class="stats-grid">
+          <div class="stat-card sessions">
+            <div class="stat-label">SESSIONS</div>
+            <div class="stat-value" id="stat-sessions">0</div>
+          </div>
+          <div class="stat-card focus">
+            <div class="stat-label">FOCUS</div>
+            <div class="stat-value" id="stat-focus">0m</div>
+          </div>
+          <div class="stat-card streak">
+            <div class="stat-label">STREAK</div>
+            <div class="stat-value">🔥0d</div>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-title">📈 이번 주 집중 현황</div>
+          <div class="chart-summary" id="chart-summary">총 0세션 · 0m 집중</div>
+          <div class="chart-bars" id="chart-bars">
+            <!-- Chart bars will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-screen="home">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" data-screen="tasks">
+        <span class="nav-icon">✓</span>
+        <span>Tasks</span>
+      </button>
+      <button class="nav-btn" data-screen="stats">
+        <span class="nav-icon">📊</span>
+        <span>Stats</span>
+      </button>
+    </nav>
+  </div>
+
+  <script>
+    const MODES = {
+      focus: { label: 'Pomodoro', seconds: 1500 },
+      short: { label: 'Short Break', seconds: 300 },
+      long: { label: 'Long Break', seconds: 2700 },
+    };
+
+    const CATEGORIES = {
+      work: { label: 'Work', icon: '🏢', color: '#2563eb' },
+      project: { label: 'Project', icon: '💡', color: '#7c3aed' },
+      personal: { label: 'Personal', icon: '🎯', color: '#059669' },
+      learning: { label: 'Learning', icon: '📚', color: '#ea580c' },
+      health: { label: 'Health', icon: '💪', color: '#dc2626' },
+    };
+
+    const PRIORITIES = {
+      low: { label: 'Low', icon: '🟢', color: '#dcfce7' },
+      medium: { label: 'Medium', icon: '🟡', color: '#fef3c7' },
+      high: { label: 'High', icon: '🟠', color: '#fed7aa' },
+      urgent: { label: 'Urgent', icon: '🔴', color: '#fecaca' },
+    };
+
+    const state = {
+      timer: { mode: 'focus', seconds: 1500, totalSeconds: 1500, isRunning: false, intervalId: null },
+      todos: [],
+      currentTodoId: null,
+      stats: { todaySessions: 0, todayFocusMin: 0, weeklyData: {} },
+      categoryFilter: 'all',
+    };
+
+    // ─── DOM Elements ───
+    const timerDisplay = document.getElementById('timer-display');
+    const pageTitle = document.getElementById('page-title');
+    const dateLabel = document.getElementById('date-label');
+    const modeSelect = document.getElementById('mode-select');
+    const btnStart = document.getElementById('btn-start');
+    const btnReset = document.getElementById('btn-reset');
+    const taskInput = document.getElementById('task-input');
+    const taskDate = document.getElementById('task-date');
+    const btnAdd = document.getElementById('btn-add');
+    const timelineList = document.getElementById('timeline-list');
+    const emptyState = document.getElementById('empty-state');
+    const focusingTask = document.getElementById('focusing-task');
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    function updateDisplay() {
+      timerDisplay.textContent = formatTime(state.timer.seconds);
+      btnStart.textContent = state.timer.isRunning ? '⏸' : '▶';
+      updateAnalogClock();
+    }
+
+    function updateAnalogClock() {
+      const minuteHand = document.getElementById('minute-hand');
+      const secondHand = document.getElementById('second-hand');
+      const modeLabel = document.getElementById('timer-mode-label');
+
+      // Update mode label
+      const modeObj = MODES[state.timer.mode];
+      if (modeLabel && modeObj) {
+        modeLabel.textContent = modeObj.label.toUpperCase();
+      }
+
+      // Calculate hand rotations
+      const totalSeconds = state.timer.totalSeconds;
+      const secondsElapsed = totalSeconds - state.timer.seconds;
+
+      // Minute hand represents progress through the full session
+      const minuteRotation = (secondsElapsed / totalSeconds) * 360;
+
+      // Second hand shows the seconds portion
+      const seconds = state.timer.seconds % 60;
+      const secondRotation = (seconds / 60) * 360;
+
+      if (minuteHand) {
+        minuteHand.style.transition = 'transform 0.3s ease-out';
+        minuteHand.style.transform = `rotate(${minuteRotation}deg)`;
+      }
+
+      if (secondHand) {
+        secondHand.style.transition = 'transform 0.1s linear';
+        secondHand.style.transform = `rotate(${secondRotation}deg)`;
+      }
+    }
+
+    function setMode(mode) {
+      if (!MODES[mode]) return;
+      state.timer.mode = mode;
+      state.timer.totalSeconds = MODES[mode].seconds;
+      state.timer.seconds = MODES[mode].seconds;
+      updateDisplay();
+    }
+
+    function startTimer() {
+      if (state.timer.isRunning) return;
+      state.timer.isRunning = true;
+      updateDisplay();
+      state.timer.intervalId = setInterval(() => {
+        state.timer.seconds--;
+        updateDisplay();
+        if (state.timer.seconds <= 0) completeSession();
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      state.timer.isRunning = false;
+      if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+      updateDisplay();
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      state.timer.seconds = state.timer.totalSeconds;
+      updateDisplay();
+    }
+
+    function completeSession() {
+      pauseTimer();
+      if (state.timer.mode === 'focus') {
+        const key = getTodayKey();
+        const entry = state.stats.weeklyData[key] || { sessions: 0, focusMinutes: 0 };
+        entry.sessions++;
+        entry.focusMinutes += 25;
+        state.stats.weeklyData[key] = entry;
+        state.stats.todaySessions = entry.sessions;
+        state.stats.todayFocusMin = entry.focusMinutes;
+        renderStats();
+        renderChart();
+      }
+      setMode(state.timer.mode === 'focus' ? 'short' : 'focus');
+    }
+
+    function getTodayKey() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function addTodo() {
+      const text = taskInput.value.trim();
+      if (!text) return;
+      const today = new Date().toISOString().split('T')[0];
+      const taskCategory = document.getElementById('task-category').value;
+      const taskPriority = document.getElementById('task-priority').value;
+      state.todos.push({
+        id: Date.now().toString(),
+        text,
+        completed: false,
+        pomodoroCount: 0,
+        dueDate: taskDate.value || today,
+        category: taskCategory,
+        priority: taskPriority,
+      });
+      taskInput.value = '';
+      taskDate.value = '';
+      renderTimeline();
+      saveToStorage();
+    }
+
+    function renderTimeline() {
+      const filtered = state.todos.filter(t => !t.completed && (state.categoryFilter === 'all' || t.category === state.categoryFilter));
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (filtered.length === 0) {
+        timelineList.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      timelineList.innerHTML = filtered.map(todo => {
+        const dueDate = new Date(todo.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+        const isOverdue = daysUntilDue < 0;
+        const isToday = daysUntilDue === 0;
+
+        const dueLabel = isOverdue ? '기한초과' : isToday ? '오늘' : daysUntilDue + 'd';
+        const barWidth = Math.max(5, (Math.min(daysUntilDue + 1, 31) / 31) * 100);
+        const category = CATEGORIES[todo.category] || CATEGORIES.personal;
+        const priority = PRIORITIES[todo.priority] || PRIORITIES.medium;
+
+        return `
+          <div class="timeline-item">
+            <input type="checkbox" onchange="toggleTodo('${todo.id}')">
+            <span style="font-size: 18px; flex-shrink: 0;" title="${category.label}">${category.icon}</span>
+            <span class="timeline-item-name" onclick="selectTodo('${todo.id}')" title="${todo.text}">${todo.text}</span>
+            <div class="timeline-bar-container">
+              <div class="timeline-bar ${isOverdue ? 'overdue' : isToday ? 'today' : ''}" style="width: ${barWidth}%"></div>
+            </div>
+            <div class="timeline-due-date">${dueLabel}</div>
+            <span style="padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: ${priority.color}; flex-shrink: 0;" title="${priority.label}">${priority.icon}</span>
+            ${todo.pomodoroCount > 0 ? `<span class="timeline-pomodoro">🍅${todo.pomodoroCount}</span>` : ''}
+            <button class="btn-delete" onclick="deleteTodo('${todo.id}')">✕</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleTodo(id) {
+      const todo = state.todos.find(t => t.id === id);
+      if (todo) {
+        todo.completed = !todo.completed;
+        renderTimeline();
+        saveToStorage();
+      }
+    }
+
+    function deleteTodo(id) {
+      state.todos = state.todos.filter(t => t.id !== id);
+      renderTimeline();
+      saveToStorage();
+    }
+
+    function selectTodo(id) {
+      state.currentTodoId = state.currentTodoId === id ? null : id;
+      const todo = state.todos.find(t => t.id === id && !t.completed);
+      if (focusingTask) focusingTask.textContent = todo ? todo.text : '할 일을 선택하세요';
+
+      // Update dashboard
+      const currentTask = document.getElementById('current-task');
+      if (currentTask) {
+        if (todo) {
+          const cat = CATEGORIES[todo.category] || CATEGORIES.personal;
+          const pri = PRIORITIES[todo.priority] || PRIORITIES.medium;
+          currentTask.innerHTML = `${todo.text}<br><span style="font-size: 12px; margin-top: 4px; display: block;">${cat.icon} ${pri.icon}</span>`;
+        } else {
+          currentTask.textContent = '할 일을 선택하세요';
+        }
+      }
+      saveToStorage();
+    }
+
+    function renderStats() {
+      document.getElementById('stat-sessions').textContent = state.stats.todaySessions;
+      document.getElementById('stat-focus').textContent = state.stats.todayFocusMin + 'm';
+      renderDashboard();
+    }
+
+    function renderDashboard() {
+      // Update daily stats
+      document.getElementById('dashboard-sessions').textContent = state.stats.todaySessions;
+      document.getElementById('dashboard-focus').textContent = Math.round(state.stats.todayFocusMin) + 'm';
+
+      // Update category breakdown
+      const categoryBreakdown = document.getElementById('category-breakdown');
+      const active = state.todos.filter(t => !t.completed);
+      categoryBreakdown.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
+        const count = active.filter(t => t.category === key).length;
+        return `
+          <div class="category-item">
+            <span class="category-item-label">${cat.icon} ${cat.label}</span>
+            <span class="category-count">${count}</span>
+          </div>
+        `;
+      }).join('');
+
+      // Update completed section
+      const completedSection = document.getElementById('completed-section');
+      const completedSummary = document.getElementById('completed-summary');
+      const completed = state.todos.filter(t => t.completed);
+
+      if (completed.length > 0) {
+        completedSection.style.display = 'flex';
+        completedSection.querySelector('.card-title').textContent = `✓ Completed (${completed.length})`;
+        completedSummary.innerHTML = completed.slice(0, 5).map(t => `
+          <div class="completed-item">
+            <span>✓</span>
+            <span>${t.text}</span>
+          </div>
+        `).join('');
+        if (completed.length > 5) {
+          completedSummary.innerHTML += `<div class="completed-item" style="font-style: italic; opacity: 0.7;">+${completed.length - 5} more</div>`;
+        }
+      } else {
+        completedSection.style.display = 'none';
+      }
+    }
+
+    function renderChart() {
+      const chartBars = document.getElementById('chart-bars');
+      const chartSummary = document.getElementById('chart-summary');
+      const dayLabels = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      const now = new Date();
+      const todayK = getTodayKey();
+
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        const entry = state.stats.weeklyData[key] || { sessions: 0, focusMinutes: 0 };
+        days.push({ label: dayLabels[d.getDay()], sessions: entry.sessions, isToday: key === todayK });
+      }
+
+      const maxSessions = Math.max(1, ...days.map(d => d.sessions));
+      const totalSessions = days.reduce((sum, d) => sum + d.sessions, 0);
+      const totalMinutes = days.reduce((sum, d) => sum + (d.sessions * 25), 0);
+
+      chartBars.innerHTML = days.map(d => {
+        const height = d.sessions === 0 ? 5 : (d.sessions / maxSessions) * 100;
+        return `
+          <div class="chart-bar">
+            <div style="min-height: 4px;">${d.sessions > 0 ? d.sessions : ''}</div>
+            <div class="bar ${d.sessions === 0 ? 'empty' : ''} ${d.isToday ? 'today' : ''}" style="height: ${height}%;"></div>
+            <div class="bar-label">${d.label}</div>
+          </div>
+        `;
+      }).join('');
+
+      chartSummary.textContent = `총 ${totalSessions}세션 · ${totalMinutes}m 집중`;
+    }
+
+    function switchScreen(screenName) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(`screen-${screenName}`).classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`[data-screen="${screenName}"]`).classList.add('active');
+
+      if (screenName === 'home') pageTitle.textContent = 'Today';
+      else if (screenName === 'tasks') pageTitle.textContent = 'Tasks Timeline';
+      else if (screenName === 'stats') pageTitle.textContent = 'Statistics';
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('focusflow_todos_v2', JSON.stringify(state.todos));
+      localStorage.setItem('focusflow_stats_v2', JSON.stringify(state.stats.weeklyData));
+    }
+
+    function loadFromStorage() {
+      try {
+        const todos = localStorage.getItem('focusflow_todos_v2');
+        if (todos) {
+          state.todos = JSON.parse(todos);
+        } else {
+          // Default todos
+          const today = new Date().toISOString().split('T')[0];
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const nextWeek = new Date();
+          nextWeek.setDate(nextWeek.getDate() + 7);
+
+          state.todos = [
+            {
+              id: '1',
+              text: '디자인 시안 검토하기',
+              completed: false,
+              pomodoroCount: 0,
+              dueDate: tomorrow.toISOString().split('T')[0],
+              category: 'work',
+              priority: 'high',
+            },
+            {
+              id: '2',
+              text: 'API 문서 작성하기',
+              completed: false,
+              pomodoroCount: 0,
+              dueDate: nextWeek.toISOString().split('T')[0],
+              category: 'project',
+              priority: 'medium',
+            },
+            {
+              id: '3',
+              text: '코드 리뷰 진행하기',
+              completed: false,
+              pomodoroCount: 0,
+              dueDate: today,
+              category: 'learning',
+              priority: 'urgent',
+            },
+          ];
+        }
+      } catch (_) {}
+
+      try {
+        const stats = localStorage.getItem('focusflow_stats_v2');
+        if (stats) state.stats.weeklyData = JSON.parse(stats);
+      } catch (_) {}
+
+      const today = state.stats.weeklyData[getTodayKey()] || { sessions: 0, focusMinutes: 0 };
+      state.stats.todaySessions = today.sessions;
+      state.stats.todayFocusMin = today.focusMinutes;
+    }
+
+    // ─── Event Listeners ───
+    btnStart.addEventListener('click', () => state.timer.isRunning ? pauseTimer() : startTimer());
+    btnReset.addEventListener('click', resetTimer);
+    modeSelect?.addEventListener('change', (e) => setMode(e.target.value));
+    btnAdd.addEventListener('click', addTodo);
+    taskInput.addEventListener('keydown', (e) => e.key === 'Enter' && addTodo());
+
+    // Mode buttons
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        if (!state.timer.isRunning) {
+          setMode(mode);
+          document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        }
+      });
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchScreen(btn.dataset.screen));
+    });
+
+    // Category filter
+    document.querySelectorAll('.category-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.categoryFilter = btn.dataset.category;
+        renderTimeline();
+      });
+    });
+
+    // ─── Initialize ───
+    window.addEventListener('load', () => {
+      loadFromStorage();
+      updateDisplay();
+      renderStats();
+      renderChart();
+      renderTimeline();
+
+      const d = new Date();
+      dateLabel.textContent = (d.getMonth() + 1) + '/' + d.getDate() + ' (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
+    });
+
+    // Global functions for inline onclick
+    window.toggleTodo = toggleTodo;
+    window.deleteTodo = deleteTodo;
+    window.selectTodo = selectTodo;
+  </script>
+</body>
+</html>
