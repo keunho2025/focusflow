@@ -33,6 +33,14 @@ const PRIORITIES: Record<TodoPriority, { label: string; icon: string; color: str
 type TimerMode = "focus" | "short" | "long";
 type Screen = "home" | "tasks" | "stats" | "settings";
 
+type News = {
+  id: string;
+  title: string;
+  category: "ai" | "stock";
+  date: string;
+  icon: string;
+};
+
 type TimerSettings = {
   focusMinutes: number;
   shortBreakMinutes: number;
@@ -44,6 +52,44 @@ const DEFAULT_SETTINGS: TimerSettings = {
   shortBreakMinutes: 5,
   longBreakMinutes: 45,
 };
+
+const MOCK_NEWS: News[] = [
+  {
+    id: "ai-1",
+    title: "Claude 4.7 API 업데이트, 성능 40% 향상",
+    category: "ai",
+    date: "오늘",
+    icon: "🤖",
+  },
+  {
+    id: "ai-2",
+    title: "생성형 AI 규제 법안 발효, 기업 준수 시작",
+    category: "ai",
+    date: "어제",
+    icon: "⚖️",
+  },
+  {
+    id: "ai-3",
+    title: "AI 스타트업, 1조원대 투자 유치 성공",
+    category: "ai",
+    date: "3일전",
+    icon: "🚀",
+  },
+  {
+    id: "stock-1",
+    title: "테크 기업들 실적 개선, 지수 2.5% 상승",
+    category: "stock",
+    date: "오늘",
+    icon: "📈",
+  },
+  {
+    id: "stock-2",
+    title: "AI 관련 주식 급등, 시가총액 신기록",
+    category: "stock",
+    date: "어제",
+    icon: "💰",
+  },
+];
 
 function getModes(settings: TimerSettings): Record<TimerMode, { label: string; seconds: number }> {
   return {
@@ -433,6 +479,44 @@ export default function Home() {
                     </div>
                   </div>
                 )}
+
+                {/* AI News Section */}
+                <div className="bg-white/90 rounded-2xl p-6 space-y-3">
+                  <h3 className="text-sm font-bold text-slate-600 tracking-widest">🤖 AI 뉴스</h3>
+                  <div className="space-y-2">
+                    {MOCK_NEWS.filter((n) => n.category === "ai").map((news) => (
+                      <div
+                        key={news.id}
+                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-200"
+                      >
+                        <span className="text-lg flex-shrink-0">{news.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 line-clamp-2">{news.title}</p>
+                          <p className="text-xs text-slate-500 mt-1">{news.date}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stock News Section */}
+                <div className="bg-white/90 rounded-2xl p-6 space-y-3">
+                  <h3 className="text-sm font-bold text-slate-600 tracking-widest">📊 주식 뉴스</h3>
+                  <div className="space-y-2">
+                    {MOCK_NEWS.filter((n) => n.category === "stock").map((news) => (
+                      <div
+                        key={news.id}
+                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-200"
+                      >
+                        <span className="text-lg flex-shrink-0">{news.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 line-clamp-2">{news.title}</p>
+                          <p className="text-xs text-slate-500 mt-1">{news.date}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* RIGHT COLUMN - Timer & Controls */}
