@@ -167,6 +167,12 @@ export default function Home() {
   const [selectedSkillFilter, setSelectedSkillFilter] = useState<SkillCategory | "all">("all");
   const [currentAINews, setCurrentAINews] = useState<News[]>([]);
   const [currentStockNews, setCurrentStockNews] = useState<News[]>([]);
+  const [isLocked, setIsLocked] = useState(true);
+  const [pinSetupStep, setPinSetupStep] = useState<"setup" | "confirm" | "unlock">("unlock");
+  const [pinInput, setPinInput] = useState("");
+  const [pinFirstEntry, setPinFirstEntry] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [pinShake, setPinShake] = useState(false);
 
   useEffect(() => {
     const savedTodos = localStorage.getItem("todos");
@@ -268,6 +274,13 @@ export default function Home() {
 
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
+    }
+
+    const savedPin = localStorage.getItem("appPin");
+    if (savedPin) {
+      setPinSetupStep("unlock");
+    } else {
+      setPinSetupStep("setup");
     }
 
     setMounted(true);
@@ -469,6 +482,60 @@ export default function Home() {
     }
   }
 
+  function handlePinKey(key: string) {
+    if (pinInput.length >= 4) return;
+    const next = pinInput + key;
+    setPinInput(next);
+    setPinError("");
+
+    if (next.length === 4) {
+      setTimeout(() => {
+        if (pinSetupStep === "unlock") {
+          const saved = localStorage.getItem("appPin");
+          if (next === saved) {
+            setIsLocked(false);
+            setPinInput("");
+          } else {
+            setPinError("PIN이 틀렸습니다");
+            setPinShake(true);
+            setPinInput("");
+            setTimeout(() => setPinShake(false), 500);
+          }
+        } else if (pinSetupStep === "setup") {
+          setPinFirstEntry(next);
+          setPinSetupStep("confirm");
+          setPinInput("");
+        } else if (pinSetupStep === "confirm") {
+          if (next === pinFirstEntry) {
+            localStorage.setItem("appPin", next);
+            setIsLocked(false);
+            setPinInput("");
+            setPinFirstEntry("");
+          } else {
+            setPinError("PIN이 일치하지 않습니다. 다시 시도하세요");
+            setPinShake(true);
+            setPinSetupStep("setup");
+            setPinInput("");
+            setPinFirstEntry("");
+            setTimeout(() => setPinShake(false), 500);
+          }
+        }
+      }, 100);
+    }
+  }
+
+  function handlePinDelete() {
+    setPinInput((prev) => prev.slice(0, -1));
+    setPinError("");
+  }
+
+  function handlePinReset() {
+    localStorage.removeItem("appPin");
+    setPinSetupStep("setup");
+    setPinInput("");
+    setPinError("");
+  }
+
   function addSkill() {
     const text = skillInput.trim();
     if (!text) return;
@@ -511,6 +578,94 @@ export default function Home() {
   }
 
   const MODES = getModes(timerSettings);
+
+  if (isLocked) {
+    const PIN_KEYS = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
+    return (
+      <div
+        className="min-h-screen w-screen flex flex-col items-center justify-center font-sans"
+        style={{ background: "linear-gradient(135deg, #b3e5fc 0%, #81d4fa 25%, #a5d6ff 50%, #80deea 75%, #4dd0e1 100%)" }}
+      >
+        <div className="flex flex-col items-center gap-6 px-8 w-full max-w-xs">
+          {/* Logo */}
+          <div className="text-center">
+            <p className="text-4xl mb-2">🎯</p>
+            <h1 className="text-2xl font-bold text-slate-700">FocusFlow</h1>
+            <p className="text-slate-500 text-sm mt-1">
+              {pinSetupStep === "setup" && "새 PIN 번호를 설정하세요"}
+              {pinSetupStep === "confirm" && "PIN 번호를 한 번 더 입력하세요"}
+              {pinSetupStep === "unlock" && "PIN 번호를 입력하세요"}
+            </p>
+          </div>
+
+          {/* Dots */}
+          <div
+            className={`flex gap-4 transition-all ${pinShake ? "animate-bounce" : ""}`}
+            style={pinShake ? { animation: "shake 0.4s ease" } : {}}
+          >
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
+                  i < pinInput.length
+                    ? "bg-slate-700 border-slate-700 scale-110"
+                    : "bg-transparent border-slate-400"
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Error */}
+          <p className="text-red-500 text-sm min-h-[20px] font-medium">{pinError}</p>
+
+          {/* Keypad */}
+          <div className="grid grid-cols-3 gap-3 w-full">
+            {PIN_KEYS.map((key, idx) => {
+              if (key === "") return <div key={idx} />;
+              if (key === "⌫") return (
+                <button
+                  key={idx}
+                  onClick={handlePinDelete}
+                  className="h-16 rounded-2xl bg-white/60 backdrop-blur-sm border border-white/80 text-xl text-slate-600 font-semibold active:scale-95 transition-transform"
+                >
+                  {key}
+                </button>
+              );
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handlePinKey(key)}
+                  className="h-16 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/90 text-xl font-semibold text-slate-700 hover:bg-white active:scale-95 transition-transform shadow-sm"
+                >
+                  {key}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Reset PIN (only on unlock screen) */}
+          {pinSetupStep === "unlock" && (
+            <button
+              onClick={handlePinReset}
+              className="text-slate-400 text-xs underline mt-2"
+            >
+              PIN 재설정
+            </button>
+          )}
+        </div>
+
+        <style>{`
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -1224,6 +1379,27 @@ export default function Home() {
                   className="w-full py-3 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition-all mt-6"
                 >
                   Reset to Default
+                </button>
+              </div>
+
+              {/* PIN Settings Card */}
+              <div className="rounded-xl bg-white/90 backdrop-blur-sm p-6 space-y-3">
+                <h3 className="text-sm font-bold text-slate-700">🔒 PIN 보안</h3>
+                <p className="text-xs text-slate-500">앱 잠금 PIN을 관리합니다</p>
+                <button
+                  onClick={() => {
+                    handlePinReset();
+                    setIsLocked(true);
+                  }}
+                  className="w-full py-3 rounded-lg bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition-all"
+                >
+                  PIN 변경
+                </button>
+                <button
+                  onClick={() => setIsLocked(true)}
+                  className="w-full py-3 rounded-lg bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition-all"
+                >
+                  앱 잠금
                 </button>
               </div>
             </div>
