@@ -39,6 +39,7 @@ type News = {
   category: "ai" | "stock";
   date: string;
   icon: string;
+  url: string;
 };
 
 type TimerSettings = {
@@ -60,6 +61,7 @@ const MOCK_NEWS: News[] = [
     category: "ai",
     date: "오늘",
     icon: "🤖",
+    url: "https://www.techcrunch.com/artificial-intelligence/",
   },
   {
     id: "ai-2",
@@ -67,13 +69,7 @@ const MOCK_NEWS: News[] = [
     category: "ai",
     date: "어제",
     icon: "⚖️",
-  },
-  {
-    id: "ai-3",
-    title: "AI 스타트업, 1조원대 투자 유치 성공",
-    category: "ai",
-    date: "3일전",
-    icon: "🚀",
+    url: "https://www.news1.kr/tech/",
   },
   {
     id: "stock-1",
@@ -81,6 +77,7 @@ const MOCK_NEWS: News[] = [
     category: "stock",
     date: "오늘",
     icon: "📈",
+    url: "https://finance.naver.com/",
   },
   {
     id: "stock-2",
@@ -88,6 +85,7 @@ const MOCK_NEWS: News[] = [
     category: "stock",
     date: "어제",
     icon: "💰",
+    url: "https://www.mk.co.kr/stock/",
   },
 ];
 
@@ -403,59 +401,59 @@ export default function Home() {
         {screen === "home" && (
           <div className="flex-1 flex flex-col overflow-y-auto pb-24">
             {/* Header */}
-            <div className="px-6 pt-6 pb-4 space-y-4">
+            <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 space-y-2 sm:space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full border-2 border-slate-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-red-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-green-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-yellow-400"></div>
-                  <button className="w-8 h-8 rounded-full bg-slate-400 text-white flex items-center justify-center text-sm">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-slate-400"></div>
+                  <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-red-400"></div>
+                  <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-green-400"></div>
+                  <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-yellow-400"></div>
+                  <button className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-400 text-white flex items-center justify-center text-xs sm:text-sm">
                     🔔
                   </button>
                 </div>
               </div>
               <div className="flex justify-between items-baseline">
-                <h2 className="text-3xl font-bold text-slate-700">Today</h2>
-                <p className="text-slate-600 text-sm">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-700">Today</h2>
+                <p className="text-slate-600 text-xs sm:text-sm">
                   {new Date().toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", weekday: "short" })}
                 </p>
               </div>
             </div>
 
-            {/* Main Dashboard - 2 Column Layout */}
-            <div className="flex-1 px-6 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto">
+            {/* Main Dashboard - Responsive Layout */}
+            <div className="flex-1 px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 overflow-y-auto">
 
-              {/* LEFT COLUMN - Statistics & Task Breakdown */}
-              <div className="space-y-4">
+              {/* LEFT COLUMN - Statistics & News */}
+              <div className="space-y-3 sm:space-y-4 min-w-0">
                 {/* Today's Stats Card */}
-                <div className="bg-white/90 rounded-2xl p-6 space-y-4">
-                  <h3 className="text-sm font-bold text-slate-600 tracking-widest">📊 TODAY'S PROGRESS</h3>
-                  <div className="space-y-3">
+                <div className="bg-white/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-widest">📊 TODAY'S PROGRESS</h3>
+                  <div className="space-y-2 sm:space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-600 font-medium">Sessions</span>
-                      <span className="text-2xl font-bold text-blue-600">{todaySessions}</span>
+                      <span className="text-sm sm:text-base text-slate-600 font-medium">Sessions</span>
+                      <span className="text-xl sm:text-2xl font-bold text-blue-600">{todaySessions}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-600 font-medium">Focus Time</span>
-                      <span className="text-2xl font-bold text-green-600">{Math.round(todayFocusMin)}m</span>
+                      <span className="text-sm sm:text-base text-slate-600 font-medium">Focus Time</span>
+                      <span className="text-xl sm:text-2xl font-bold text-green-600">{Math.round(todayFocusMin)}m</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Category Breakdown */}
-                <div className="bg-white/90 rounded-2xl p-6 space-y-3">
-                  <h3 className="text-sm font-bold text-slate-600 tracking-widest">📂 BY CATEGORY</h3>
-                  <div className="space-y-2">
+                <div className="bg-white/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-widest">📂 BY CATEGORY</h3>
+                  <div className="space-y-1 sm:space-y-2">
                     {Object.entries(CATEGORIES).map(([key, { label, icon, color }]) => {
                       const count = activeTodos.filter((t) => t.category === key).length;
                       return (
-                        <div key={key} className="flex justify-between items-center text-sm">
+                        <div key={key} className="flex justify-between items-center text-xs sm:text-sm">
                           <span className="text-slate-700">{icon} {label}</span>
-                          <span className="font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded">{count}</span>
+                          <span className="font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded text-xs">{count}</span>
                         </div>
                       );
                     })}
@@ -481,48 +479,54 @@ export default function Home() {
                 )}
 
                 {/* AI News Section */}
-                <div className="bg-white/90 rounded-2xl p-6 space-y-3">
-                  <h3 className="text-sm font-bold text-slate-600 tracking-widest">🤖 AI 뉴스</h3>
-                  <div className="space-y-2">
+                <div className="bg-white/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3 flex flex-col">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-widest">🤖 AI 뉴스</h3>
+                  <div className="space-y-1 sm:space-y-2 flex-1 overflow-y-auto">
                     {MOCK_NEWS.filter((n) => n.category === "ai").map((news) => (
-                      <div
+                      <a
                         key={news.id}
-                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-200"
+                        href={news.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer border border-transparent hover:border-slate-200 block min-h-12 sm:min-h-auto"
                       >
-                        <span className="text-lg flex-shrink-0">{news.icon}</span>
+                        <span className="text-base sm:text-lg flex-shrink-0 mt-0.5">{news.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-700 line-clamp-2">{news.title}</p>
-                          <p className="text-xs text-slate-500 mt-1">{news.date}</p>
+                          <p className="text-xs sm:text-sm font-medium text-slate-700 line-clamp-2">{news.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{news.date}</p>
                         </div>
-                      </div>
+                      </a>
                     ))}
                   </div>
                 </div>
 
                 {/* Stock News Section */}
-                <div className="bg-white/90 rounded-2xl p-6 space-y-3">
-                  <h3 className="text-sm font-bold text-slate-600 tracking-widest">📊 주식 뉴스</h3>
-                  <div className="space-y-2">
+                <div className="bg-white/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3 flex flex-col">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-widest">📊 주식 뉴스</h3>
+                  <div className="space-y-1 sm:space-y-2 flex-1 overflow-y-auto">
                     {MOCK_NEWS.filter((n) => n.category === "stock").map((news) => (
-                      <div
+                      <a
                         key={news.id}
-                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-200"
+                        href={news.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer border border-transparent hover:border-slate-200 block min-h-12 sm:min-h-auto"
                       >
-                        <span className="text-lg flex-shrink-0">{news.icon}</span>
+                        <span className="text-base sm:text-lg flex-shrink-0 mt-0.5">{news.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-700 line-clamp-2">{news.title}</p>
-                          <p className="text-xs text-slate-500 mt-1">{news.date}</p>
+                          <p className="text-xs sm:text-sm font-medium text-slate-700 line-clamp-2">{news.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{news.date}</p>
                         </div>
-                      </div>
+                      </a>
                     ))}
                   </div>
                 </div>
               </div>
 
               {/* RIGHT COLUMN - Timer & Controls */}
-              <div className="flex flex-col items-center justify-center space-y-6">
+              <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-6">
                 {/* Analog Clock */}
-                <div className="relative w-48 h-48">
+                <div className="relative w-32 h-32 sm:w-48 sm:h-48">
                   <svg viewBox="0 0 200 200" className="w-full h-full">
                     {/* Clock Face */}
                     <circle cx="100" cy="100" r="95" fill="rgba(255,255,255,0.95)" stroke="white" strokeWidth="3" />
@@ -585,22 +589,22 @@ export default function Home() {
                   </svg>
 
                   {/* Time Display in Center */}
-                  <div className="absolute inset-0 flex items-center justify-center flex-col gap-1">
-                    <p className="text-3xl font-bold text-slate-700 tabular-nums">
+                  <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5 sm:gap-1">
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-700 tabular-nums">
                       {formatTime(secondsLeft)}
                     </p>
-                    <p className="text-xs text-slate-500 font-medium">{MODES[mode].label}</p>
+                    <p className="text-xs text-slate-500 font-medium text-center px-2">{MODES[mode].label}</p>
                   </div>
                 </div>
 
                 {/* Current Task */}
-                <div className="text-center space-y-2">
+                <div className="text-center space-y-1 sm:space-y-2 w-full px-2">
                   <p className="text-white/70 text-xs font-light tracking-widest">
                     {selectedTodo ? "FOCUSING ON" : "SELECT A TASK"}
                   </p>
                   {selectedTodo ? (
-                    <div className="space-y-1">
-                      <p className="text-white font-bold text-lg">{selectedTodo.text}</p>
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <p className="text-white font-bold text-sm sm:text-lg line-clamp-1">{selectedTodo.text}</p>
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-lg">{CATEGORIES[selectedTodo.category].icon}</span>
                         <span className={`text-xs font-semibold px-2 py-1 rounded ${PRIORITIES[selectedTodo.priority].color}`}>
@@ -609,34 +613,34 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-white/60 text-sm">No task selected</p>
+                    <p className="text-white/60 text-xs sm:text-sm">No task selected</p>
                   )}
                 </div>
 
                 {/* Control Buttons */}
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <button
                     onClick={() => (isRunning ? pauseTimer() : startTimer())}
-                    className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 font-bold text-xl text-slate-700"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 font-bold text-lg sm:text-xl text-slate-700"
                   >
                     {isRunning ? "⏸" : "▶"}
                   </button>
                   <button
                     onClick={resetTimer}
-                    className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 font-bold text-xl text-slate-700"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all active:scale-95 font-bold text-lg sm:text-xl text-slate-700"
                   >
                     ↻
                   </button>
                 </div>
 
                 {/* Mode Buttons */}
-                <div className="grid grid-cols-3 gap-2 w-full max-w-xs">
+                <div className="grid grid-cols-3 gap-1 sm:gap-2 w-full max-w-xs px-2">
                   {Object.entries(MODES).map(([key, { label }]) => (
                     <button
                       key={key}
                       onClick={() => switchMode(key as TimerMode)}
                       disabled={isRunning}
-                      className={`py-2 px-3 rounded-lg font-semibold text-xs transition-all ${
+                      className={`py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-semibold text-xs transition-all ${
                         mode === key
                           ? "bg-white text-slate-700 shadow-lg"
                           : "bg-white/40 text-white border border-white/50 hover:bg-white/50 disabled:opacity-50"
