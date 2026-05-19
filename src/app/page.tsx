@@ -77,40 +77,40 @@ const DEFAULT_SETTINGS: TimerSettings = {
   longBreakMinutes: 45,
 };
 
-const MOCK_NEWS: News[] = [
-  {
-    id: "ai-1",
-    title: "Claude 4.7 API 업데이트, 성능 40% 향상",
-    category: "ai",
-    date: "오늘",
-    icon: "🤖",
-    url: "https://www.techcrunch.com/artificial-intelligence/",
-  },
-  {
-    id: "ai-2",
-    title: "생성형 AI 규제 법안 발효, 기업 준수 시작",
-    category: "ai",
-    date: "어제",
-    icon: "⚖️",
-    url: "https://www.news1.kr/tech/",
-  },
-  {
-    id: "stock-1",
-    title: "테크 기업들 실적 개선, 지수 2.5% 상승",
-    category: "stock",
-    date: "오늘",
-    icon: "📈",
-    url: "https://finance.naver.com/",
-  },
-  {
-    id: "stock-2",
-    title: "AI 관련 주식 급등, 시가총액 신기록",
-    category: "stock",
-    date: "어제",
-    icon: "💰",
-    url: "https://www.mk.co.kr/stock/",
-  },
+const ALL_AI_NEWS: News[] = [
+  { id: "ai-1", title: "Claude 4.7 API 업데이트, 성능 40% 향상", category: "ai", date: "오늘", icon: "🤖", url: "https://www.anthropic.com/" },
+  { id: "ai-2", title: "생성형 AI 규제 법안 발효, 기업 준수 시작", category: "ai", date: "어제", icon: "⚖️", url: "https://news.naver.com/section/105" },
+  { id: "ai-3", title: "구글 Gemini 2.0, 멀티모달 기능 강화", category: "ai", date: "3일전", icon: "🔍", url: "https://www.google.com/intl/ko/about/products/" },
+  { id: "ai-4", title: "메타, 오픈소스 AI 모델 공개", category: "ai", date: "2일전", icon: "🦾", url: "https://www.meta.com/" },
+  { id: "ai-5", title: "마이크로소프트 코파일럿, 성능 개선", category: "ai", date: "오늘", icon: "💻", url: "https://www.microsoft.com/en-us/copilot/" },
+  { id: "ai-6", title: "AI 스타트업, 10억 달러 투자 유치", category: "ai", date: "어제", icon: "💰", url: "https://techcrunch.com/category/artificial-intelligence/" },
+  { id: "ai-7", title: "AI 보안 위협, 기업 대응 강화", category: "ai", date: "2일전", icon: "🔐", url: "https://news.naver.com/section/105" },
+  { id: "ai-8", title: "대학교 AI 연구센터 개설 확대", category: "ai", date: "3일전", icon: "🎓", url: "https://news.naver.com/section/105" },
+  { id: "ai-9", title: "AI 기술로 신약 개발 성공", category: "ai", date: "오늘", icon: "🧬", url: "https://news.naver.com/section/105" },
+  { id: "ai-10", title: "생성 AI 부작용 연구 논문 발표", category: "ai", date: "어제", icon: "📊", url: "https://news.naver.com/section/105" },
+  { id: "ai-11", title: "AI 음성 기술, 실시간 번역 가능", category: "ai", date: "2일전", icon: "🎙️", url: "https://news.naver.com/section/105" },
+  { id: "ai-12", title: "챗봇 기술로 고객 만족도 상승", category: "ai", date: "3일전", icon: "💬", url: "https://news.naver.com/section/105" },
 ];
+
+const ALL_STOCK_NEWS: News[] = [
+  { id: "stock-1", title: "테크 기업들 실적 개선, 지수 2.5% 상승", category: "stock", date: "오늘", icon: "📈", url: "https://finance.naver.com/" },
+  { id: "stock-2", title: "AI 관련 주식 급등, 시가총액 신기록", category: "stock", date: "어제", icon: "💰", url: "https://finance.naver.com/" },
+  { id: "stock-3", title: "반도체주, 실적 기대감에 상승", category: "stock", date: "2일전", icon: "🔌", url: "https://finance.naver.com/" },
+  { id: "stock-4", title: "엔비디아, GPU 수요로 주가 급등", category: "stock", date: "3일전", icon: "🚀", url: "https://finance.naver.com/" },
+  { id: "stock-5", title: "코스피, 3000선 회복 기대", category: "stock", date: "오늘", icon: "📊", url: "https://finance.naver.com/" },
+  { id: "stock-6", title: "배당주 매력도 증가, 기관 매수", category: "stock", date: "어제", icon: "💵", url: "https://finance.naver.com/" },
+  { id: "stock-7", title: "전기차 업체, 올해 실적 호조", category: "stock", date: "2일전", icon: "🚗", url: "https://finance.naver.com/" },
+  { id: "stock-8", title: "금융주 실적 개선, 투자자 관심 증대", category: "stock", date: "3일전", icon: "🏦", url: "https://finance.naver.com/" },
+  { id: "stock-9", title: "바이오 기업, 신약 개발 성공 기대", category: "stock", date: "오늘", icon: "🧪", url: "https://finance.naver.com/" },
+  { id: "stock-10", title: "전자 기업 신제품 공개, 주가 상승", category: "stock", date: "어제", icon: "📱", url: "https://finance.naver.com/" },
+  { id: "stock-11", title: "에너지주, 유가 상승에 수혜", category: "stock", date: "2일전", icon: "⛽", url: "https://finance.naver.com/" },
+  { id: "stock-12", title: "통신주, 5G 본격 가입에 기대", category: "stock", date: "3일전", icon: "📡", url: "https://finance.naver.com/" },
+];
+
+function getRandomNews(newsArray: News[]): News[] {
+  const shuffled = [...newsArray].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 2);
+}
 
 function getModes(settings: TimerSettings): Record<TimerMode, { label: string; seconds: number }> {
   return {
@@ -165,6 +165,8 @@ export default function Home() {
   const [skillGoalHours, setSkillGoalHours] = useState(0);
   const [skillsTab, setSkillsTab] = useState<"list" | "add">("list");
   const [selectedSkillFilter, setSelectedSkillFilter] = useState<SkillCategory | "all">("all");
+  const [currentAINews, setCurrentAINews] = useState<News[]>([]);
+  const [currentStockNews, setCurrentStockNews] = useState<News[]>([]);
 
   useEffect(() => {
     const savedTodos = localStorage.getItem("todos");
@@ -294,6 +296,23 @@ export default function Home() {
       localStorage.setItem("skills", JSON.stringify(skills));
     }
   }, [skills, mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      setCurrentAINews(getRandomNews(ALL_AI_NEWS));
+      setCurrentStockNews(getRandomNews(ALL_STOCK_NEWS));
+    }
+  }, [mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const newsInterval = setInterval(() => {
+      setCurrentAINews(getRandomNews(ALL_AI_NEWS));
+      setCurrentStockNews(getRandomNews(ALL_STOCK_NEWS));
+    }, 10 * 60 * 1000);
+
+    return () => clearInterval(newsInterval);
+  }, [mounted]);
 
   const selectedTodo = todos.find((t) => t.id === selectedId && !t.completed);
   const progress = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
@@ -591,7 +610,7 @@ export default function Home() {
                 <div className="bg-white/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3 flex flex-col">
                   <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-widest">🤖 AI 뉴스</h3>
                   <div className="space-y-1 sm:space-y-2 flex-1 overflow-y-auto">
-                    {MOCK_NEWS.filter((n) => n.category === "ai").map((news) => (
+                    {currentAINews.map((news) => (
                       <a
                         key={news.id}
                         href={news.url}
@@ -613,7 +632,7 @@ export default function Home() {
                 <div className="bg-white/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3 flex flex-col">
                   <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-widest">📊 주식 뉴스</h3>
                   <div className="space-y-1 sm:space-y-2 flex-1 overflow-y-auto">
-                    {MOCK_NEWS.filter((n) => n.category === "stock").map((news) => (
+                    {currentStockNews.map((news) => (
                       <a
                         key={news.id}
                         href={news.url}
