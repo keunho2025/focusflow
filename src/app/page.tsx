@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
 
 type TodoCategory = "work" | "project" | "personal" | "learning" | "health";
 type TodoPriority = "low" | "medium" | "high" | "urgent";
@@ -137,6 +138,7 @@ function todayKey() {
 }
 
 export default function Home() {
+  const { data: session } = useSession();
   const [screen, setScreen] = useState<Screen>("home");
   const [timerSettings, setTimerSettings] = useState<TimerSettings>(DEFAULT_SETTINGS);
   const [mode, setMode] = useState<TimerMode>("focus");
@@ -690,17 +692,29 @@ export default function Home() {
                   <h1 className="text-xl sm:text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-slate-400"></div>
-                  <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-red-400"></div>
-                  <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-green-400"></div>
-                  <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-yellow-400"></div>
-                  <button className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-400 text-white flex items-center justify-center text-xs sm:text-sm">
-                    🔔
+                  {session?.user?.image ? (
+                    <img
+                      src={session.user.image}
+                      alt="profile"
+                      className="w-8 h-8 rounded-full border-2 border-white/80 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-slate-400 flex items-center justify-center text-white text-xs font-bold">
+                      {session?.user?.name?.[0]?.toUpperCase() ?? "U"}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="px-3 py-1.5 rounded-full bg-white/70 text-slate-600 text-xs font-semibold hover:bg-white transition-all"
+                  >
+                    로그아웃
                   </button>
                 </div>
               </div>
               <div className="flex justify-between items-baseline">
-                <h2 className="text-2xl sm:text-3xl font-bold text-slate-700">Today</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-700">
+                  {session?.user?.name ? `안녕하세요, ${session.user.name.split(" ")[0]}님` : "Today"}
+                </h2>
                 <p className="text-slate-600 text-xs sm:text-sm">
                   {new Date().toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", weekday: "short" })}
                 </p>
