@@ -30,8 +30,31 @@ const PRIORITIES: Record<TodoPriority, { label: string; icon: string; color: str
   urgent: { label: "Urgent", icon: "🔴", color: "bg-red-200" },
 };
 
+const SKILL_CATEGORIES: Record<SkillCategory, { label: string; icon: string; color: string }> = {
+  programming: { label: "프로그래밍", icon: "💻", color: "bg-blue-100 border-blue-300" },
+  design: { label: "디자인", icon: "🎨", color: "bg-purple-100 border-purple-300" },
+  language: { label: "언어", icon: "🌍", color: "bg-green-100 border-green-300" },
+  math: { label: "수학/통계", icon: "📐", color: "bg-yellow-100 border-yellow-300" },
+  music: { label: "음악", icon: "🎵", color: "bg-pink-100 border-pink-300" },
+  other: { label: "기타", icon: "⭐", color: "bg-slate-100 border-slate-300" },
+};
+
 type TimerMode = "focus" | "short" | "long";
-type Screen = "home" | "tasks" | "stats" | "settings";
+type Screen = "home" | "tasks" | "stats" | "skills" | "settings";
+
+type SkillCategory = "programming" | "design" | "language" | "math" | "music" | "other";
+
+type Skill = {
+  id: string;
+  name: string;
+  category: SkillCategory;
+  icon: string;
+  goalHours: number;
+  totalMinutes: number;
+  totalSessions: number;
+  createdAt: string;
+  color: string;
+};
 
 type News = {
   id: string;
@@ -134,11 +157,20 @@ export default function Home() {
   const [todayFocusMin, setTodayFocusMin] = useState(0);
   const [mounted, setMounted] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
+  const [skillInput, setSkillInput] = useState("");
+  const [skillCategory, setSkillCategory] = useState<SkillCategory>("programming");
+  const [skillIcon, setSkillIcon] = useState("💻");
+  const [skillGoalHours, setSkillGoalHours] = useState(0);
+  const [skillsTab, setSkillsTab] = useState<"list" | "add">("list");
+  const [selectedSkillFilter, setSelectedSkillFilter] = useState<SkillCategory | "all">("all");
 
   useEffect(() => {
     const savedTodos = localStorage.getItem("todos");
     const savedWeeklyData = localStorage.getItem("weeklyData");
     const savedSettings = localStorage.getItem("timerSettings");
+    const savedSkills = localStorage.getItem("skills");
 
     if (savedTodos) {
       const parsed = JSON.parse(savedTodos);
@@ -203,6 +235,35 @@ export default function Home() {
       setTotalSeconds(settings.focusMinutes * 60);
     }
 
+    if (savedSkills) {
+      setSkills(JSON.parse(savedSkills));
+    } else {
+      setSkills([
+        {
+          id: "skill-1",
+          name: "TypeScript",
+          category: "programming",
+          icon: "💻",
+          goalHours: 50,
+          totalMinutes: 0,
+          totalSessions: 0,
+          createdAt: new Date().toISOString(),
+          color: "bg-blue-100 border-blue-300",
+        },
+        {
+          id: "skill-2",
+          name: "UI 디자인",
+          category: "design",
+          icon: "🎨",
+          goalHours: 30,
+          totalMinutes: 0,
+          totalSessions: 0,
+          createdAt: new Date().toISOString(),
+          color: "bg-purple-100 border-purple-300",
+        },
+      ]);
+    }
+
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
@@ -227,6 +288,12 @@ export default function Home() {
       localStorage.setItem("timerSettings", JSON.stringify(timerSettings));
     }
   }, [timerSettings, mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("skills", JSON.stringify(skills));
+    }
+  }, [skills, mounted]);
 
   const selectedTodo = todos.find((t) => t.id === selectedId && !t.completed);
   const progress = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
@@ -261,6 +328,19 @@ export default function Home() {
         setTodos((prev) =>
           prev.map((t) =>
             t.id === selectedId ? { ...t, pomodoroCount: t.pomodoroCount + 1 } : t
+          )
+        );
+      }
+      if (selectedSkillId) {
+        setSkills((prev) =>
+          prev.map((sk) =>
+            sk.id === selectedSkillId
+              ? {
+                  ...sk,
+                  totalMinutes: sk.totalMinutes + timerSettings.focusMinutes,
+                  totalSessions: sk.totalSessions + 1,
+                }
+              : sk
           )
         );
       }
@@ -367,6 +447,35 @@ export default function Home() {
     if (id === selectedId) {
       setSelectedId(null);
       pauseTimer();
+    }
+  }
+
+  function addSkill() {
+    const text = skillInput.trim();
+    if (!text) return;
+    setSkills((prev) => [
+      ...prev,
+      {
+        id: String(Date.now()),
+        name: text,
+        category: skillCategory,
+        icon: skillIcon,
+        goalHours: skillGoalHours,
+        totalMinutes: 0,
+        totalSessions: 0,
+        createdAt: new Date().toISOString(),
+        color: SKILL_CATEGORIES[skillCategory].color,
+      },
+    ]);
+    setSkillInput("");
+    setSkillGoalHours(0);
+    setSkillsTab("list");
+  }
+
+  function deleteSkill(id: string) {
+    setSkills((prev) => prev.filter((sk) => sk.id !== id));
+    if (id === selectedSkillId) {
+      setSelectedSkillId(null);
     }
   }
 
@@ -650,6 +759,20 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
+
+                {/* Skill Selection */}
+                <select
+                  value={selectedSkillId ?? ""}
+                  onChange={(e) => setSelectedSkillId(e.target.value || null)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/80 text-slate-700 text-xs border border-white/60 outline-none focus:ring-2 focus:ring-blue-300 max-w-xs"
+                >
+                  <option value="">스킬 선택 안 함</option>
+                  {skills.map((sk) => (
+                    <option key={sk.id} value={sk.id}>
+                      {sk.icon} {sk.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -1088,11 +1211,259 @@ export default function Home() {
           </div>
         )}
 
+        {/* Skills Screen */}
+        {screen === "skills" && (
+          <div className="relative w-full flex-1 flex flex-col overflow-y-auto pb-24">
+            {/* Header */}
+            <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 space-y-2 sm:space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
+                </div>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-slate-400"></div>
+                  <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-red-400"></div>
+                  <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-green-400"></div>
+                  <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-yellow-400"></div>
+                  <button className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-400 text-white flex items-center justify-center text-xs sm:text-sm">
+                    🔔
+                  </button>
+                </div>
+              </div>
+              <div className="flex justify-between items-baseline">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-700">Skills</h2>
+                <p className="text-slate-600 text-xs sm:text-sm">
+                  {new Date().toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", weekday: "short" })}
+                </p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 px-4 sm:px-6 py-4 sm:py-6 space-y-3 sm:space-y-4 overflow-y-auto">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="bg-white/90 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-xs sm:text-sm text-slate-500 font-semibold">스킬</p>
+                  <p className="text-xl sm:text-2xl font-bold text-blue-600">{skills.length}</p>
+                </div>
+                <div className="bg-white/90 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-xs sm:text-sm text-slate-500 font-semibold">총 세션</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
+                    {skills.reduce((s, sk) => s + sk.totalSessions, 0)}
+                  </p>
+                </div>
+                <div className="bg-white/90 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-xs sm:text-sm text-slate-500 font-semibold">총 시간</p>
+                  <p className="text-xl sm:text-2xl font-bold text-orange-600">
+                    {Math.round((skills.reduce((s, sk) => s + sk.totalMinutes, 0) / 60) * 10) / 10}h
+                  </p>
+                </div>
+              </div>
+
+              {/* Tab Toggle */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSkillsTab("list")}
+                  className={`flex-1 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm transition-all ${
+                    skillsTab === "list"
+                      ? "bg-slate-700 text-white"
+                      : "bg-white/90 border border-slate-300 text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  스킬 목록
+                </button>
+                <button
+                  onClick={() => setSkillsTab("add")}
+                  className={`flex-1 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm transition-all ${
+                    skillsTab === "add"
+                      ? "bg-slate-700 text-white"
+                      : "bg-white/90 border border-slate-300 text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  스킬 추가
+                </button>
+              </div>
+
+              {/* Skills List Tab */}
+              {skillsTab === "list" && (
+                <div className="space-y-3">
+                  {/* Category Filter */}
+                  <div className="overflow-x-auto pb-2">
+                    <div className="flex gap-2 whitespace-nowrap">
+                      <button
+                        onClick={() => setSelectedSkillFilter("all")}
+                        className={`px-3 sm:px-4 py-2 rounded-full font-semibold text-xs sm:text-sm transition-all flex-shrink-0 ${
+                          selectedSkillFilter === "all"
+                            ? "bg-slate-700 text-white"
+                            : "bg-white/90 border border-slate-300 text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        All
+                      </button>
+                      {Object.entries(SKILL_CATEGORIES).map(([key, { label, icon }]) => (
+                        <button
+                          key={key}
+                          onClick={() => setSelectedSkillFilter(key as SkillCategory)}
+                          className={`px-3 sm:px-4 py-2 rounded-full font-semibold text-xs sm:text-sm transition-all flex-shrink-0 ${
+                            selectedSkillFilter === key
+                              ? "bg-slate-700 text-white"
+                              : "bg-white/90 border border-slate-300 text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          {icon} {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Skills Cards */}
+                  {skills.filter((sk) => selectedSkillFilter === "all" || sk.category === selectedSkillFilter).length > 0 ? (
+                    <div className="space-y-2 sm:space-y-3">
+                      {skills
+                        .filter((sk) => selectedSkillFilter === "all" || sk.category === selectedSkillFilter)
+                        .map((skill) => {
+                          const progressPercent = skill.goalHours > 0 ? Math.min(100, Math.round((skill.totalMinutes / 60 / skill.goalHours) * 100)) : 0;
+                          const isComplete = progressPercent >= 100;
+                          return (
+                            <div key={skill.id} className="bg-white/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-2 sm:space-y-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg sm:text-xl">{skill.icon}</span>
+                                    <div className="min-w-0">
+                                      <p className="font-bold text-slate-700 text-sm sm:text-base truncate">{skill.name}</p>
+                                      <p className="text-xs text-slate-500">{SKILL_CATEGORIES[skill.category].label}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => deleteSkill(skill.id)}
+                                  className="text-red-400 hover:text-red-600 text-lg flex-shrink-0"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+
+                              <div className="flex gap-2 text-xs sm:text-sm text-slate-600">
+                                <span>🎯 {skill.totalSessions}세션</span>
+                                <span>⏱️ {Math.round((skill.totalMinutes / 60) * 10) / 10}h</span>
+                              </div>
+
+                              {skill.goalHours > 0 && (
+                                <div className="space-y-1">
+                                  <div className="flex justify-between items-center text-xs text-slate-500">
+                                    <span>목표 {skill.goalHours}h</span>
+                                    <span className={isComplete ? "text-green-600 font-bold" : ""}>
+                                      {progressPercent}% {isComplete ? "달성!" : ""}
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-2 sm:h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full transition-all duration-500 ${
+                                        isComplete
+                                          ? "bg-gradient-to-r from-green-400 to-green-500"
+                                          : progressPercent >= 75
+                                          ? "bg-gradient-to-r from-blue-500 to-blue-600"
+                                          : progressPercent >= 50
+                                          ? "bg-gradient-to-r from-blue-400 to-blue-500"
+                                          : "bg-gradient-to-r from-slate-300 to-blue-300"
+                                      }`}
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </div>
+                                  <p className="text-xs text-slate-400">{Math.round((skill.totalMinutes / 60) * 10) / 10}h / {skill.goalHours}h</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-32 text-slate-600">
+                      <p className="text-sm">스킬을 추가해보세요!</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Skills Add Tab */}
+              {skillsTab === "add" && (
+                <div className="space-y-3 sm:space-y-4">
+                  <div>
+                    <label className="text-xs sm:text-sm font-semibold text-slate-700 block mb-2">스킬 이름</label>
+                    <input
+                      type="text"
+                      value={skillInput}
+                      onChange={(e) => setSkillInput(e.target.value)}
+                      placeholder="예: TypeScript, UI 디자인"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-white border border-slate-300 text-slate-700 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs sm:text-sm font-semibold text-slate-700 block mb-2">카테고리</label>
+                    <select
+                      value={skillCategory}
+                      onChange={(e) => setSkillCategory(e.target.value as SkillCategory)}
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-white border border-slate-300 text-slate-700 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                    >
+                      {Object.entries(SKILL_CATEGORIES).map(([key, { label, icon }]) => (
+                        <option key={key} value={key}>
+                          {icon} {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs sm:text-sm font-semibold text-slate-700 block mb-2">아이콘 선택</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {["💻", "🎨", "🌍", "📐", "🎵", "⭐", "🚀", "📚"].map((icon) => (
+                        <button
+                          key={icon}
+                          onClick={() => setSkillIcon(icon)}
+                          className={`py-2 px-2 rounded-lg text-2xl transition-all ${
+                            skillIcon === icon
+                              ? "bg-slate-700 ring-2 ring-slate-700"
+                              : "bg-white/90 border border-slate-300 hover:bg-slate-100"
+                          }`}
+                        >
+                          {icon}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs sm:text-sm font-semibold text-slate-700 block mb-2">목표 시간 (시간, 선택사항)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000"
+                      value={skillGoalHours}
+                      onChange={(e) => setSkillGoalHours(Math.max(0, parseInt(e.target.value) || 0))}
+                      placeholder="예: 50"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-white border border-slate-300 text-slate-700 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+
+                  <button
+                    onClick={addSkill}
+                    className="w-full py-2 sm:py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-all text-sm sm:text-base"
+                  >
+                    스킬 추가
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Bottom Navigation */}
         <nav className="fixed bottom-0 left-0 right-0 flex justify-around bg-slate-600/80 backdrop-blur-lg p-4 text-slate-700">
-          {(["home", "tasks", "stats", "settings"] as Screen[]).map((s) => {
-            const icons: Record<Screen, string> = { home: "🏠", tasks: "✓", stats: "📊", settings: "⚙️" };
-            const labels: Record<Screen, string> = { home: "Home", tasks: "Tasks", stats: "Stats", settings: "Settings" };
+          {(["home", "tasks", "stats", "skills", "settings"] as Screen[]).map((s) => {
+            const icons: Record<Screen, string> = { home: "🏠", tasks: "✓", stats: "📊", skills: "⚡", settings: "⚙️" };
+            const labels: Record<Screen, string> = { home: "Home", tasks: "Tasks", stats: "Stats", skills: "Skills", settings: "Settings" };
             return (
               <button
                 key={s}
