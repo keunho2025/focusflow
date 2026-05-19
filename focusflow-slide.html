@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusFlow — 바이브코딩 프로젝트 발표</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden; background: #000;
+      font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont,
+        'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress Bar ── */
+    .progress-bar {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: #007AFF; z-index: 1000;
+      transition: width 0.4s cubic-bezier(0.25,0.1,0.25,1);
+      border-radius: 0 2px 2px 0;
+      box-shadow: 0 0 8px rgba(0,122,255,0.4);
+    }
+
+    /* ── Slide Counter ── */
+    .slide-counter {
+      position: fixed; bottom: 24px; right: 32px;
+      font-size: 13px; font-weight: 500;
+      color: rgba(255,255,255,0.45); z-index: 100;
+      font-variant-numeric: tabular-nums; letter-spacing: 0.5px;
+      transition: color 0.4s ease;
+    }
+    .slide-counter.on-light { color: rgba(0,0,0,0.35); }
+
+    /* ── Keyboard Hints ── */
+    .hint {
+      position: fixed; bottom: 24px; left: 32px;
+      display: flex; gap: 8px; align-items: center;
+      z-index: 100; font-size: 12px; color: rgba(255,255,255,0.4);
+    }
+    .hint.on-light { color: rgba(0,0,0,0.3); }
+    .hint kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 24px; height: 24px; padding: 0 6px;
+      font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px; transition: all 0.4s ease;
+    }
+    .hint.on-light kbd { color: rgba(0,0,0,0.4); background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.15); }
+
+    /* ── Fullscreen Button ── */
+    .fullscreen-btn {
+      position: fixed; top: 20px; right: 24px;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px; color: rgba(255,255,255,0.6);
+      font-size: 18px; cursor: pointer; z-index: 100;
+      transition: all 0.3s ease; backdrop-filter: blur(8px);
+    }
+    .fullscreen-btn:hover { background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.9); transform: scale(1.05); }
+    .fullscreen-btn.on-light { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.12); color: rgba(0,0,0,0.45); }
+
+    /* ── Deck & Slides ── */
+    .deck { width: 100vw; height: 100vh; position: relative; }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 60px 100px; text-align: center;
+      opacity: 0; visibility: hidden; overflow-y: auto;
+      transition: opacity 0.6s cubic-bezier(0.25,0.1,0.25,1), visibility 0.6s;
+    }
+    .slide.active { opacity: 1; visibility: visible; }
+
+    .slide-dark     { background: #000; color: #fff; }
+    .slide-gradient { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); color: #fff; }
+    .slide-warm     { background: linear-gradient(135deg, #1a0a2e, #2e1a0f, #1a1a0a); color: #fff; }
+    .slide-light    { background: #f5f5f7; color: #1a1a1a; }
+
+    /* ── Stagger Animations ── */
+    .slide .a {
+      opacity: 0; transform: translateY(26px);
+      transition: opacity 0.55s cubic-bezier(0.25,0.1,0.25,1),
+                  transform 0.55s cubic-bezier(0.25,0.1,0.25,1);
+    }
+    .slide.active .a { opacity: 1; transform: translateY(0); }
+    .slide.active .a:nth-child(1)  { transition-delay: 0.08s; }
+    .slide.active .a:nth-child(2)  { transition-delay: 0.18s; }
+    .slide.active .a:nth-child(3)  { transition-delay: 0.28s; }
+    .slide.active .a:nth-child(4)  { transition-delay: 0.38s; }
+    .slide.active .a:nth-child(5)  { transition-delay: 0.48s; }
+    .slide.active .a:nth-child(6)  { transition-delay: 0.58s; }
+    .slide.active .a:nth-child(7)  { transition-delay: 0.68s; }
+    .slide.active .a:nth-child(8)  { transition-delay: 0.78s; }
+    .slide.active .a:nth-child(9)  { transition-delay: 0.88s; }
+
+    /* ── Typography ── */
+    .xl  { font-size: 88px;  font-weight: 900; line-height: 1.05; letter-spacing: -2.5px; }
+    .lg  { font-size: 54px;  font-weight: 900; line-height: 1.1;  letter-spacing: -1.5px; }
+    .md  { font-size: 32px;  font-weight: 700; line-height: 1.25; letter-spacing: -0.5px; }
+    .sm  { font-size: 20px;  font-weight: 400; line-height: 1.65; }
+    .xs  { font-size: 15px;  font-weight: 400; line-height: 1.65; }
+
+    .text-gradient {
+      background: linear-gradient(135deg, #007AFF, #5856D6, #AF52DE);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .text-gold {
+      background: linear-gradient(135deg, #FFD60A, #FF9500);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .text-muted  { opacity: 0.6; }
+    .text-subtle { opacity: 0.4; }
+    .accent      { color: #007AFF; }
+
+    .mt-1 { margin-top: 16px; }
+    .mt-2 { margin-top: 32px; }
+    .mt-3 { margin-top: 48px; }
+    .mb-1 { margin-bottom: 16px; }
+    .mb-2 { margin-bottom: 32px; }
+
+    /* ── Divider ── */
+    .divider { width: 56px; height: 3px; background: #007AFF; border-radius: 2px; margin: 12px auto; }
+    .divider.gold { background: linear-gradient(90deg, #FFD60A, #FF9500); }
+
+    /* ── Title Slide ── */
+    .title-slide { gap: 20px; }
+    .title-slide .overline {
+      font-size: 14px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 6px; color: #007AFF;
+    }
+    .title-slide .subtitle { font-size: 22px; font-weight: 400; color: rgba(255,255,255,0.45); margin-top: 8px; }
+    .title-slide .meta { margin-top: 48px; font-size: 13px; color: rgba(255,255,255,0.28); letter-spacing: 1px; }
+
+    /* ── Agenda ── */
+    .agenda-list { list-style: none; width: 100%; max-width: 660px; }
+    .agenda-list li {
+      display: flex; align-items: center; gap: 20px;
+      padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 22px; font-weight: 500; letter-spacing: -0.3px;
+    }
+    .agenda-list li:last-child { border-bottom: none; }
+    .agenda-list .num {
+      font-size: 13px; font-weight: 700; color: #007AFF;
+      min-width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,122,255,0.15); border-radius: 7px;
+    }
+
+    /* ── Content Centered ── */
+    .content-centered { max-width: 860px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+    /* ── Highlight Box ── */
+    .highlight-box {
+      background: rgba(0,122,255,0.1); border: 1px solid rgba(0,122,255,0.22);
+      border-radius: 14px; padding: 20px 28px; max-width: 800px; margin-top: 24px;
+    }
+    .highlight-box p { font-size: 16px; line-height: 1.75; color: rgba(255,255,255,0.75); }
+
+    /* ── Glass Cards ── */
+    .cards-grid   { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; width: 100%; max-width: 940px; margin-top: 28px; }
+    .cards-grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; width: 100%; max-width: 740px; margin-top: 28px; }
+
+    .glass-card {
+      background: rgba(255,255,255,0.07); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.11); border-radius: 18px;
+      padding: 26px 22px; text-align: left;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .glass-card:hover { transform: translateY(-4px); border-color: rgba(0,122,255,0.3); box-shadow: 0 10px 32px rgba(0,0,0,0.3); }
+    .glass-card .card-icon { font-size: 30px; margin-bottom: 12px; display: block; }
+    .glass-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 9px; letter-spacing: -0.3px; }
+    .glass-card p  { font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.55); }
+    .glass-card .card-tag {
+      display: inline-block; margin-top: 12px; padding: 3px 10px;
+      font-size: 11px; font-weight: 700; border-radius: 20px;
+      background: rgba(0,122,255,0.15); color: #007AFF;
+    }
+
+    /* ── Flow Steps ── */
+    .flow-container { display: flex; gap: 10px; align-items: center; width: 100%; max-width: 1060px; margin-top: 32px; }
+    .flow-step {
+      flex: 1; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+      padding: 26px 18px; text-align: center; position: relative;
+    }
+    .flow-step .step-glow {
+      position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+      width: 60%; height: 2px;
+      background: linear-gradient(90deg, transparent, #007AFF, transparent);
+    }
+    .flow-step .step-num   { font-size: 11px; font-weight: 700; color: #007AFF; letter-spacing: 2px; margin-bottom: 8px; }
+    .flow-step .step-icon  { font-size: 26px; margin-bottom: 8px; }
+    .flow-step .step-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .flow-step .step-desc  { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5; }
+    .flow-arrow { font-size: 16px; color: rgba(255,255,255,0.2); flex-shrink: 0; }
+
+    /* ── Bar Chart ── */
+    .chart-container {
+      display: flex; align-items: flex-end; gap: 22px;
+      height: 230px; width: 100%; max-width: 720px;
+      margin-top: 36px; padding-bottom: 34px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
+    .chart-bar {
+      width: 100%; max-width: 52px; border-radius: 7px 7px 3px 3px;
+      position: relative; min-height: 8px;
+      transition: transform 0.3s ease;
+    }
+    .chart-bar:hover { transform: scaleY(1.04); transform-origin: bottom; }
+    .chart-bar .bar-val {
+      position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); white-space: nowrap;
+    }
+    .chart-bar-group .bar-label { font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 500; }
+    .bar-c1 { background: linear-gradient(180deg,#007AFF,#0055CC); }
+    .bar-c2 { background: linear-gradient(180deg,#5856D6,#3634A3); }
+    .bar-c3 { background: linear-gradient(180deg,#AF52DE,#8944AB); }
+    .bar-c4 { background: linear-gradient(180deg,#FF9500,#CC7700); }
+    .bar-c5 { background: linear-gradient(180deg,#FF2D55,#CC2444); }
+    .bar-c6 { background: linear-gradient(180deg,#30D158,#28A745); }
+    .bar-c7 { background: linear-gradient(180deg,#64D2FF,#0099CC); }
+
+    /* ── Tech Grid ── */
+    .tech-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; width: 100%; max-width: 860px; margin-top: 28px; }
+    .tech-badge {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 14px; padding: 20px 14px; text-align: center;
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+    .tech-badge:hover { transform: translateY(-3px); border-color: rgba(0,122,255,0.3); }
+    .tech-badge .tech-icon { font-size: 26px; margin-bottom: 8px; display: block; }
+    .tech-badge .tech-name { font-size: 14px; font-weight: 700; color: #fff; }
+    .tech-badge .tech-ver  { font-size: 11px; color: rgba(255,255,255,0.38); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+    /* ── Screen Tabs ── */
+    .tabs-container { display: flex; gap: 10px; width: 100%; max-width: 860px; margin-top: 28px; justify-content: center; flex-wrap: wrap; }
+    .tab-item {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 14px; padding: 16px 18px; flex: 1; min-width: 120px; max-width: 165px; text-align: center;
+    }
+    .tab-item .tab-icon  { font-size: 24px; margin-bottom: 7px; display: block; }
+    .tab-item .tab-name  { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .tab-item .tab-desc  { font-size: 11px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+    .tab-item.active-tab { border-color: #007AFF; background: rgba(0,122,255,0.12); }
+
+    /* ── Feature List ── */
+    .feature-list { list-style: none; width: 100%; max-width: 620px; text-align: left; margin-top: 24px; }
+    .feature-list li {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 16px; line-height: 1.55;
+    }
+    .feature-list li:last-child { border-bottom: none; }
+    .feature-list .fi { font-size: 19px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Review Cards ── */
+    .review-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; width: 100%; max-width: 960px; margin-top: 28px; }
+    .review-card {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px; padding: 28px 24px; text-align: left;
+    }
+    .review-card .review-num {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      color: #FFD60A; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .review-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 12px; color: #fff; }
+    .review-card p  { font-size: 13px; line-height: 1.75; color: rgba(255,255,255,0.6); }
+    .review-card .top-line {
+      position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+      width: 60%; height: 2px;
+      background: linear-gradient(90deg, transparent, #FFD60A, transparent);
+    }
+    .review-card { position: relative; }
+
+    /* ── Closing ── */
+    .closing-slide { gap: 18px; }
+    .closing-slide .closing-title { font-size: 98px; font-weight: 900; letter-spacing: -3px; line-height: 1; }
+    .closing-slide .closing-sub { font-size: 20px; font-weight: 400; color: rgba(255,255,255,0.4); }
+
+    /* ── Q&A ── */
+    .qa-bg-q {
+      font-size: 200px; font-weight: 900; letter-spacing: -8px; line-height: 1;
+      color: #007AFF; opacity: 0.08; position: absolute; user-select: none;
+    }
+    .qa-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+    /* ── Print ── */
+    @media print {
+      html, body { width: 100%; height: auto; overflow: visible; background: #fff; }
+      .progress-bar, .slide-counter, .hint, .fullscreen-btn { display: none !important; }
+      .deck { width: 100%; height: auto; }
+      .slide {
+        position: relative; opacity: 1 !important; visibility: visible !important;
+        page-break-after: always; page-break-inside: avoid;
+        width: 100%; height: 100vh;
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+      }
+      .slide .a { opacity: 1 !important; transform: none !important; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .slide { padding: 40px 30px; }
+      .xl { font-size: 52px; } .lg { font-size: 36px; } .md { font-size: 24px; }
+      .closing-slide .closing-title { font-size: 64px; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .tech-grid  { grid-template-columns: repeat(2,1fr); }
+      .review-grid { grid-template-columns: 1fr; }
+      .flow-container { flex-direction: column; gap: 8px; }
+      .flow-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar" id="progress"></div>
+  <div class="slide-counter" id="counter"></div>
+  <div class="hint" id="hint">
+    <kbd>←</kbd><kbd>→</kbd> 이동&nbsp;
+    <kbd>F</kbd> 전체화면&nbsp;
+    <kbd>S</kbd> 발표자 노트
+  </div>
+  <button class="fullscreen-btn" id="fs-btn" onclick="toggleFullscreen()">⛶</button>
+
+  <div class="deck" id="deck">
+
+    <!-- ══════════════════════════════════
+         01 · TITLE
+    ══════════════════════════════════ -->
+    <div class="slide slide-dark active title-slide"
+         data-notes="안녕하세요. 오늘은 바이브코딩 강의 수강 후 직접 제작한 FocusFlow를 소개하겠습니다. 포모도로 기법 기반의 생산성 관리 앱으로, 집중 타이머·할 일·스킬·통계를 한 화면에서 관리할 수 있습니다.">
+      <span class="a overline">바이브코딩 프로젝트 발표</span>
+      <h1 class="a xl">🎯 FocusFlow</h1>
+      <p class="a subtitle">포모도로 기반 생산성 관리 앱</p>
+      <p class="a meta">Next.js 16 · React 19 · Tailwind CSS v4 · NextAuth v5</p>
+    </div>
+
+    <!-- ══════════════════════════════════
+         02 · AGENDA
+    ══════════════════════════════════ -->
+    <div class="slide slide-dark"
+         data-notes="오늘 발표 순서를 안내드립니다. 기획 배경부터 시작해 주요 기능, 기술 스택, 화면 구성을 소개하고 마지막으로 수강 후기를 말씀드리겠습니다.">
+      <h2 class="a lg mb-2">발표 순서</h2>
+      <ol class="a agenda-list">
+        <li class="a"><span class="num">01</span> 기획 배경 — 왜 만들었나</li>
+        <li class="a"><span class="num">02</span> 핵심 기능 소개</li>
+        <li class="a"><span class="num">03</span> 기술 스택 &amp; 프로젝트 구조</li>
+        <li class="a"><span class="num">04</span> 화면 구성</li>
+        <li class="a"><span class="num">05</span> 수강 후기</li>
+      </ol>
+    </div>
+
+    <!-- ══════════════════════════════════
+         03 · 기획 배경 — PROBLEM
+    ══════════════════════════════════ -->
+    <div class="slide slide-gradient"
+         data-notes="많은 사람들이 집중력 관리, 할 일 분산, 성장 추적을 각각 다른 툴로 관리합니다. 앱을 여러 개 오가다 보면 오히려 집중이 깨집니다. 이 문제를 하나의 앱으로 해결하고자 FocusFlow를 기획했습니다.">
+      <div class="content-centered a">
+        <p class="a sm text-muted">기획 배경</p>
+        <div class="a divider"></div>
+        <h2 class="a lg" style="margin-top:14px;">
+          집중하려는데<br>툴이 너무 많다.
+        </h2>
+        <p class="a sm text-muted" style="max-width:600px; margin-top:18px;">
+          타이머 · 할 일 · 스킬 트래커 · 뉴스 — 전부 따로따로.<br>
+          앱을 오가는 것 자체가 집중력을 방해합니다.
+        </p>
+        <div class="a highlight-box" style="margin-top:20px;">
+          <p>→ <strong style="color:#fff;">하나의 앱</strong>으로 모든 생산성 흐름을 끊김 없이 관리한다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         04 · FEATURE: TIMER
+    ══════════════════════════════════ -->
+    <div class="slide slide-dark"
+         data-notes="포모도로 타이머의 핵심 기능입니다. 집중 25분, 짧은 휴식 5분, 긴 휴식 45분 세 모드를 지원하고 시간은 자유롭게 설정할 수 있습니다. 아날로그 시계로 시각적 피드백을 주고, 세션 완료 시 브라우저 알림과 알림음이 울립니다.">
+      <h2 class="a lg mb-1">⏱ 포모도로 타이머</h2>
+      <p class="a sm text-muted mb-2">집중력을 극대화하는 시간 관리 시스템</p>
+      <div class="a cards-grid">
+        <div class="a glass-card">
+          <span class="card-icon">🕐</span>
+          <h3>3가지 모드</h3>
+          <p>집중 25분 · 짧은 휴식 5분 · 긴 휴식 45분.<br>시간은 Settings에서 자유롭게 커스터마이징.</p>
+          <span class="card-tag">Timer</span>
+        </div>
+        <div class="a glass-card">
+          <span class="card-icon">🕰️</span>
+          <h3>아날로그 시계 UI</h3>
+          <p>분침·초침으로 남은 시간을 직관적으로 표시. 중앙에 디지털 카운트다운 병행 표시.</p>
+          <span class="card-tag">Visual</span>
+        </div>
+        <div class="a glass-card">
+          <span class="card-icon">🔔</span>
+          <h3>세션 완료 알림</h3>
+          <p>Web Notification API + AudioContext 알림음으로 세션 완료를 즉각 인지.</p>
+          <span class="card-tag">Notification</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         05 · FEATURE: TASKS
+    ══════════════════════════════════ -->
+    <div class="slide slide-gradient"
+         data-notes="할 일 관리 기능입니다. 5가지 카테고리와 4단계 우선순위로 체계적으로 분류하고, 마감일 기준 30일 타임라인 뷰로 한눈에 현황을 파악합니다. 포모도로와 연동해 각 할 일에 집중 횟수가 자동 누적됩니다.">
+      <h2 class="a lg mb-1">✅ 할 일 관리</h2>
+      <p class="a sm text-muted mb-2">카테고리 · 우선순위 · 타임라인으로 체계적으로</p>
+      <div class="a cards-grid">
+        <div class="a glass-card">
+          <span class="card-icon">📂</span>
+          <h3>5가지 카테고리</h3>
+          <p>Work · Project · Personal · Learning · Health로 할 일을 목적별로 분류.</p>
+          <span class="card-tag">Category</span>
+        </div>
+        <div class="a glass-card">
+          <span class="card-icon">🔴</span>
+          <h3>4단계 우선순위</h3>
+          <p>Low · Medium · High · Urgent 우선순위로 중요한 일을 놓치지 않게.</p>
+          <span class="card-tag">Priority</span>
+        </div>
+        <div class="a glass-card">
+          <span class="card-icon">📅</span>
+          <h3>30일 타임라인</h3>
+          <p>마감일 기준 30일 간트 차트 뷰. 기한 초과 항목은 빨간색으로 즉시 확인.</p>
+          <span class="card-tag">Timeline</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         06 · FEATURE: SKILLS
+    ══════════════════════════════════ -->
+    <div class="slide slide-dark"
+         data-notes="스킬 트래커는 FocusFlow의 차별화 기능입니다. 포모도로 세션 시작 전 스킬을 선택하면, 세션 완료 시 자동으로 시간과 세션 수가 누적됩니다. 목표 시간을 설정하면 달성률을 프로그레스 바로 확인할 수 있습니다.">
+      <h2 class="a lg mb-1">⚡ 스킬 트래커</h2>
+      <p class="a sm text-muted mb-2">성장을 숫자로 증명한다</p>
+      <div class="a flow-container">
+        <div class="a flow-step">
+          <div class="step-glow"></div>
+          <div class="step-num">STEP 01</div>
+          <div class="step-icon">📝</div>
+          <div class="step-title">스킬 등록</div>
+          <div class="step-desc">이름 · 카테고리 · 목표 시간 설정</div>
+        </div>
+        <span class="a flow-arrow">→</span>
+        <div class="a flow-step">
+          <div class="step-glow"></div>
+          <div class="step-num">STEP 02</div>
+          <div class="step-icon">⏱️</div>
+          <div class="step-title">세션 연동</div>
+          <div class="step-desc">포모도로 시작 전 스킬 선택</div>
+        </div>
+        <span class="a flow-arrow">→</span>
+        <div class="a flow-step">
+          <div class="step-glow"></div>
+          <div class="step-num">STEP 03</div>
+          <div class="step-icon">📈</div>
+          <div class="step-title">자동 누적</div>
+          <div class="step-desc">세션 수 · 총 시간 자동 기록</div>
+        </div>
+        <span class="a flow-arrow">→</span>
+        <div class="a flow-step">
+          <div class="step-glow"></div>
+          <div class="step-num">STEP 04</div>
+          <div class="step-icon">🏆</div>
+          <div class="step-title">목표 달성</div>
+          <div class="step-desc">100% 달성 시 초록색 강조</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         07 · FEATURE: STATS
+    ══════════════════════════════════ -->
+    <div class="slide slide-dark"
+         data-notes="통계 화면입니다. 오늘의 세션 수와 집중 시간을 한눈에 확인하고, 최근 7일 데이터를 바 차트로 시각화해 나의 생산성 패턴을 파악할 수 있습니다.">
+      <h2 class="a lg">📊 주간 통계</h2>
+      <p class="a sm text-muted">최근 7일 포모도로 세션 현황</p>
+      <div class="a chart-container">
+        <div class="chart-bar-group a"><div class="chart-bar bar-c1" style="height:30%"><span class="bar-val">3</span></div><span class="bar-label">MON</span></div>
+        <div class="chart-bar-group a"><div class="chart-bar bar-c2" style="height:55%"><span class="bar-val">5</span></div><span class="bar-label">TUE</span></div>
+        <div class="chart-bar-group a"><div class="chart-bar bar-c3" style="height:42%"><span class="bar-val">4</span></div><span class="bar-label">WED</span></div>
+        <div class="chart-bar-group a"><div class="chart-bar bar-c4" style="height:70%"><span class="bar-val">7</span></div><span class="bar-label">THU</span></div>
+        <div class="chart-bar-group a"><div class="chart-bar bar-c5" style="height:50%"><span class="bar-val">5</span></div><span class="bar-label">FRI</span></div>
+        <div class="chart-bar-group a"><div class="chart-bar bar-c6" style="height:20%"><span class="bar-val">2</span></div><span class="bar-label">SAT</span></div>
+        <div class="chart-bar-group a"><div class="chart-bar bar-c7" style="height:88%"><span class="bar-val">8</span></div><span class="bar-label">SUN</span></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         08 · FEATURE: SECURITY + NEWS
+    ══════════════════════════════════ -->
+    <div class="slide slide-gradient"
+         data-notes="보안과 뉴스 피드입니다. 4자리 PIN으로 앱을 잠가 타인 접근을 막고, GitHub OAuth로 미인증 접근을 차단합니다. 홈 화면에서는 AI와 주식 뉴스를 10분마다 자동 갱신하여 업무 흐름을 끊지 않고 트렌드를 확인할 수 있습니다.">
+      <h2 class="a lg mb-2">🔒 보안 · 📰 뉴스 피드</h2>
+      <div class="a cards-grid-2">
+        <div class="a glass-card">
+          <span class="card-icon">🔐</span>
+          <h3>PIN 잠금 + GitHub OAuth</h3>
+          <p>앱 실행 시 4자리 PIN으로 보호. NextAuth v5 기반 GitHub OAuth 로그인, proxy.ts로 미인증 접근 차단.</p>
+          <span class="card-tag">Security</span>
+        </div>
+        <div class="a glass-card">
+          <span class="card-icon">📰</span>
+          <h3>AI · 주식 뉴스 자동 갱신</h3>
+          <p>홈 화면에서 AI·주식 뉴스 랜덤 2개씩 표시. 10분마다 자동 갱신. 외부 링크로 상세 확인 가능.</p>
+          <span class="card-tag">News Feed</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         09 · TECH STACK
+    ══════════════════════════════════ -->
+    <div class="slide slide-dark"
+         data-notes="기술 스택입니다. Next.js 16의 App Router와 React 19, Tailwind CSS v4를 조합해 최신 프런트엔드 스택을 활용했습니다. 인증은 NextAuth v5의 GitHub OAuth를 사용하며, 데이터는 localStorage에 저장해 별도 서버 없이도 완전히 동작합니다.">
+      <h2 class="a lg mb-1">기술 스택</h2>
+      <p class="a sm text-muted mb-2">최신 프런트엔드 생태계로 구축</p>
+      <div class="a tech-grid">
+        <div class="a tech-badge"><span class="tech-icon">▲</span><div class="tech-name">Next.js</div><div class="tech-ver">v16.2.6</div></div>
+        <div class="a tech-badge"><span class="tech-icon">⚛️</span><div class="tech-name">React</div><div class="tech-ver">v19.2.4</div></div>
+        <div class="a tech-badge"><span class="tech-icon">🎨</span><div class="tech-name">Tailwind CSS</div><div class="tech-ver">v4</div></div>
+        <div class="a tech-badge"><span class="tech-icon">🔑</span><div class="tech-name">NextAuth</div><div class="tech-ver">v5 beta</div></div>
+        <div class="a tech-badge"><span class="tech-icon">🔷</span><div class="tech-name">TypeScript</div><div class="tech-ver">v5 strict</div></div>
+        <div class="a tech-badge"><span class="tech-icon">⚡</span><div class="tech-name">Turbopack</div><div class="tech-ver">Dev bundler</div></div>
+        <div class="a tech-badge"><span class="tech-icon">🐙</span><div class="tech-name">GitHub OAuth</div><div class="tech-ver">Social login</div></div>
+        <div class="a tech-badge"><span class="tech-icon">💾</span><div class="tech-name">localStorage</div><div class="tech-ver">Persistence</div></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         10 · ARCHITECTURE
+    ══════════════════════════════════ -->
+    <div class="slide slide-gradient"
+         data-notes="프로젝트 구조입니다. Next.js App Router 기반으로, layout.tsx가 루트 레이아웃이고 page.tsx가 메인 앱 전체를 담당합니다. auth.ts에서 NextAuth를 설정하고, proxy.ts 미들웨어에서 인증되지 않은 접근을 로그인 페이지로 리다이렉트합니다.">
+      <h2 class="a lg mb-2">프로젝트 구조</h2>
+      <div class="a" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:26px 36px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:2.1;color:rgba(255,255,255,0.8);text-align:left;max-width:620px;width:100%">
+        <span style="color:#007AFF">src/</span><br>
+        &nbsp;&nbsp;<span style="color:#5856D6">app/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#30D158">api/auth/[...nextauth]/</span>&nbsp;&nbsp;<span style="color:rgba(255,255,255,0.3)">← NextAuth</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#30D158">login/</span>&nbsp;&nbsp;<span style="color:rgba(255,255,255,0.3)">← GitHub OAuth 로그인</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#FF9500">layout.tsx</span>&nbsp;&nbsp;<span style="color:rgba(255,255,255,0.3)">← SessionProvider</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#FF9500">page.tsx</span>&nbsp;&nbsp;<span style="color:rgba(255,255,255,0.3)">← 메인 앱 전체</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#FF9500">globals.css</span>&nbsp;&nbsp;<span style="color:rgba(255,255,255,0.3)">← Tailwind v4 테마</span><br>
+        &nbsp;&nbsp;<span style="color:#AF52DE">auth.ts</span>&nbsp;&nbsp;<span style="color:rgba(255,255,255,0.3)">← NextAuth 설정</span><br>
+        &nbsp;&nbsp;<span style="color:#AF52DE">proxy.ts</span>&nbsp;&nbsp;<span style="color:rgba(255,255,255,0.3)">← 라우트 보호 미들웨어</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         11 · SCREEN OVERVIEW
+    ══════════════════════════════════ -->
+    <div class="slide slide-dark"
+         data-notes="앱은 하단 내비게이션 5개 탭으로 구성됩니다. Home은 타이머와 대시보드, Tasks는 할 일 타임라인, Stats는 주간 통계 차트, Skills는 스킬 목록과 추가, Settings는 타이머 시간과 PIN을 관리합니다.">
+      <h2 class="a lg mb-1">화면 구성</h2>
+      <p class="a sm text-muted mb-2">5개 탭으로 이루어진 올인원 대시보드</p>
+      <div class="a tabs-container">
+        <div class="a tab-item active-tab">
+          <span class="tab-icon">🏠</span>
+          <div class="tab-name">Home</div>
+          <div class="tab-desc">타이머 + 통계 + 뉴스</div>
+        </div>
+        <div class="a tab-item">
+          <span class="tab-icon">✅</span>
+          <div class="tab-name">Tasks</div>
+          <div class="tab-desc">할 일 타임라인</div>
+        </div>
+        <div class="a tab-item">
+          <span class="tab-icon">📊</span>
+          <div class="tab-name">Stats</div>
+          <div class="tab-desc">주간 집중 차트</div>
+        </div>
+        <div class="a tab-item">
+          <span class="tab-icon">⚡</span>
+          <div class="tab-name">Skills</div>
+          <div class="tab-desc">스킬 목표 · 추적</div>
+        </div>
+        <div class="a tab-item">
+          <span class="tab-icon">⚙️</span>
+          <div class="tab-name">Settings</div>
+          <div class="tab-desc">타이머 · PIN 설정</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         12 · 수강 후기
+    ══════════════════════════════════ -->
+    <div class="slide slide-warm"
+         data-notes="수강 후기입니다. 강의 듣기 전, 듣고 난 후, 프로젝트를 진행하면서의 세 단계로 나누어 말씀드리겠습니다.">
+      <p class="a sm" style="letter-spacing:4px;text-transform:uppercase;font-size:12px;color:#FFD60A;">Course Review</p>
+      <h2 class="a lg mt-1">수강 후기</h2>
+      <div class="a divider gold" style="margin-top:16px;"></div>
+      <div class="a review-grid" style="margin-top:28px;">
+        <div class="a review-card">
+          <div class="top-line"></div>
+          <div class="review-num">Before</div>
+          <h3>강의 듣기 전</h3>
+          <p>바이브코딩이 무엇인지 몰랐지만, 자연어로 생각하는 대로 구현할 수 있는 것이라고 막연하게 생각하고 시작했다.</p>
+        </div>
+        <div class="a review-card">
+          <div class="top-line"></div>
+          <div class="review-num">After</div>
+          <h3>강의 듣고 난 후</h3>
+          <p>바이브코딩이 무엇인지 명확히 이해하게 되었고, 어떻게 활용하는지 알게 된 것이 가장 좋았다.</p>
+        </div>
+        <div class="a review-card">
+          <div class="top-line"></div>
+          <div class="review-num">During</div>
+          <h3>프로젝트 진행하면서</h3>
+          <p>처음엔 기획이 어려웠지만, 여러 사이트를 참고하며 바이브코딩으로 계획을 세우고 직접 구현해낸 것이 정말 뿌듯했다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         13 · CLOSING
+    ══════════════════════════════════ -->
+    <div class="slide slide-dark closing-slide"
+         data-notes="이상으로 FocusFlow 발표를 마치겠습니다. 집중을 방해하는 모든 복잡함을 없애고, 생산성의 모든 흐름을 한 곳에 담았습니다. 들어주셔서 감사합니다.">
+      <h1 class="a closing-title text-gradient">감사합니다.</h1>
+      <p class="a closing-sub">집중을 방해하는 모든 복잡함을 없앴습니다.</p>
+      <p class="a" style="margin-top:36px;font-size:14px;color:#007AFF;font-family:'JetBrains Mono',monospace;">
+        github.com/keunho2025/focusflow
+      </p>
+    </div>
+
+    <!-- ══════════════════════════════════
+         14 · Q&A
+    ══════════════════════════════════ -->
+    <div class="slide slide-dark"
+         data-notes="질문 받겠습니다. 기능 구현 방식, 기술 선택 이유, 어려웠던 점, 향후 개선 방향 등 어떤 질문이든 환영합니다.">
+      <span class="qa-bg-q a">?</span>
+      <div class="a qa-content">
+        <p class="a" style="font-size:12px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,0.4);">Q &amp; A</p>
+        <h2 class="a lg">질문 있으신가요?</h2>
+        <p class="a sm text-muted" style="max-width:460px;margin-top:10px;">
+          기능 · 구현 · 기술 선택에 대해<br>어떤 질문이든 환영합니다.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- END DECK -->
+
+  <script>
+    (function () {
+      'use strict';
+
+      var slides  = Array.from(document.querySelectorAll('.slide'));
+      var total   = slides.length;
+      var current = 0;
+      var notesWindow = null;
+
+      var progressBar = document.getElementById('progress');
+      var counter     = document.getElementById('counter');
+      var hintEl      = document.getElementById('hint');
+      var fsBtn       = document.getElementById('fs-btn');
+
+      function updateProgress() {
+        progressBar.style.width = ((current + 1) / total * 100) + '%';
+      }
+      function updateCounter() {
+        counter.textContent = (current + 1) + ' / ' + total;
+      }
+      function updateNotes() {
+        if (!notesWindow || notesWindow.closed) return;
+        try {
+          var note = slides[current].getAttribute('data-notes') || '(노트 없음)';
+          notesWindow.document.getElementById('nt').textContent = note;
+          notesWindow.document.getElementById('sn').textContent =
+            'Slide ' + (current + 1) + ' / ' + total;
+        } catch(e) {}
+      }
+      function updateLight() {
+        var isLight = slides[current].classList.contains('slide-light');
+        counter.classList.toggle('on-light', isLight);
+        hintEl.classList.toggle('on-light', isLight);
+        fsBtn.classList.toggle('on-light', isLight);
+      }
+
+      function goTo(index) {
+        if (index < 0 || index >= total || index === current) return;
+        slides[current].classList.remove('active');
+        current = index;
+        slides[current].classList.add('active');
+        updateProgress(); updateCounter(); updateNotes(); updateLight();
+        history.replaceState(null, '', '#' + (current + 1));
+      }
+
+      function readHash() {
+        var h = window.location.hash;
+        if (h && /^#\d+$/.test(h)) {
+          var idx = parseInt(h.slice(1), 10) - 1;
+          if (idx >= 0 && idx < total) {
+            slides[current].classList.remove('active');
+            current = idx;
+            slides[current].classList.add('active');
+          }
+        }
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        switch (e.key) {
+          case 'ArrowRight': case 'ArrowDown': e.preventDefault(); goTo(current + 1); break;
+          case 'ArrowLeft':  case 'ArrowUp':   e.preventDefault(); goTo(current - 1); break;
+          case ' ': e.preventDefault(); e.shiftKey ? goTo(current-1) : goTo(current+1); break;
+          case 'Home': e.preventDefault(); goTo(0); break;
+          case 'End':  e.preventDefault(); goTo(total - 1); break;
+          case 'f': case 'F': e.preventDefault(); toggleFullscreen(); break;
+          case 's': case 'S': e.preventDefault(); toggleNotes(); break;
+        }
+      });
+
+      document.getElementById('deck').addEventListener('click', function (e) {
+        if (e.target.closest('a, button')) return;
+        var x = e.clientX - this.getBoundingClientRect().left;
+        x > this.getBoundingClientRect().width / 2 ? goTo(current + 1) : goTo(current - 1);
+      });
+
+      var tx = 0, ty = 0, tt = 0;
+      document.addEventListener('touchstart', function (e) {
+        tx = e.touches[0].clientX; ty = e.touches[0].clientY; tt = Date.now();
+      }, { passive: true });
+      document.addEventListener('touchend', function (e) {
+        var dx = e.changedTouches[0].clientX - tx;
+        var dy = e.changedTouches[0].clientY - ty;
+        if (Date.now() - tt > 500 || Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+        dx < 0 ? goTo(current + 1) : goTo(current - 1);
+      }, { passive: true });
+
+      window.toggleFullscreen = function () {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(function(){});
+        } else {
+          document.exitFullscreen().catch(function(){});
+        }
+      };
+
+      function toggleNotes() {
+        if (notesWindow && !notesWindow.closed) { notesWindow.close(); notesWindow = null; return; }
+        notesWindow = window.open('', 'SpeakerNotes', 'width=520,height=420,top=80,left=80');
+        notesWindow.document.write('<!DOCTYPE html><html><head><style>' +
+          '* { margin:0; padding:0; box-sizing:border-box; }' +
+          'body { font-family: -apple-system, "Noto Sans KR", sans-serif;' +
+          '       background:#1a1a1a; color:#e0e0e0; padding:24px; }' +
+          '#sn { font-size:12px; color:#888; margin-bottom:12px; font-family:monospace; }' +
+          '.label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:8px; }' +
+          '#nt { font-size:15px; line-height:1.8; color:#ccc; }' +
+          '</style></head><body>' +
+          '<div id="sn"></div><div class="label">발표자 노트</div><div id="nt">S 키로 노트를 엽니다.</div>' +
+          '</body></html>');
+        notesWindow.document.close();
+        updateNotes();
+      }
+      window.toggleNotes = toggleNotes;
+
+      window.addEventListener('hashchange', function () { readHash(); updateProgress(); updateCounter(); updateLight(); });
+      readHash(); updateProgress(); updateCounter(); updateLight();
+    })();
+  </script>
+</body>
+</html>

@@ -28,3 +28,7 @@ There is no test script configured yet.
 - **Static assets**: `public/` (served from `/`).
 - **Fonts**: `next/font/google` is wired up in `layout.tsx` (Geist + Geist Mono) with CSS variables `--font-geist-sans` / `--font-geist-mono`.
 - TypeScript `strict` is on; `next.config.ts` is currently empty — add config there, not in a `.js` variant.
+
+
+## /make-slide
+When the user types "/make-slide", read `.claude/skills/make-slide/SKILL.md` and follow the presentation creation workflow. Browse themes at https://make-slide.vercel.app

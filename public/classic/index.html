@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🍅 FocusFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script>
+    // Apply saved theme before <style> evaluates to avoid first-paint flash.
+    (function () {
+      try {
+        var t = localStorage.getItem('focusflow_theme');
+        var valid = ['blue', 'red', 'teal', 'olive'];
+        document.documentElement.dataset.theme = valid.indexOf(t) >= 0 ? t : 'blue';
+      } catch (_) {
+        document.documentElement.dataset.theme = 'blue';
+      }
+    })();
+  </script>
+  <style>
+    :root {
+      --color-text-primary: #FFFFFF;
+      --color-text-muted: rgba(255, 255, 255, 0.65);
+
+      --font-ui: 'Nunito', system-ui, -apple-system, sans-serif;
+      --font-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+
+      --theme-bg: #4A6A8A;
+      --theme-ink: #4A6A8A;
+    }
+
+    :root[data-theme="blue"]  { --theme-bg: #4A6A8A; --theme-ink: #3E5876; }
+    :root[data-theme="red"]   { --theme-bg: #B23347; --theme-ink: #94293A; }
+    :root[data-theme="teal"]  { --theme-bg: #2D8B86; --theme-ink: #1F6B66; }
+    :root[data-theme="olive"] { --theme-bg: #B5AB5F; --theme-ink: #6E682D; }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-ui);
+      color: var(--color-text-primary);
+      background-color: #ECEAF0;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ───── Phone frame ───── */
+    .phone-frame {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--theme-bg);
+      position: relative;
+      transition: background-color 0.4s ease;
+    }
+    @media (min-width: 768px) {
+      body { padding: 32px 0; }
+      .phone-frame {
+        min-height: calc(100vh - 64px);
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+      }
+    }
+
+    /* ───── Header ───── */
+    #app-header {
+      padding: 20px 22px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      color: var(--color-text-primary);
+    }
+    #app-header .brand {
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+    }
+    #app-header .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ───── Theme switcher ───── */
+    .theme-switcher {
+      display: inline-flex;
+      gap: 5px;
+    }
+    .theme-chip {
+      width: 22px;
+      height: 22px;
+      border: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      padding: 0;
+      background: var(--chip-color);
+      opacity: 0.5;
+      transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .theme-chip:hover { opacity: 0.85; transform: scale(1.1); }
+    .theme-chip.active {
+      opacity: 1;
+      box-shadow: 0 0 0 2px var(--color-text-primary);
+    }
+    .theme-chip[data-theme="blue"]  { --chip-color: #4A6A8A; }
+    .theme-chip[data-theme="red"]   { --chip-color: #B23347; }
+    .theme-chip[data-theme="teal"]  { --chip-color: #2D8B86; }
+    .theme-chip[data-theme="olive"] { --chip-color: #B5AB5F; }
+
+    /* ───── Notify button ───── */
+    #notify-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--color-text-primary);
+      font-size: 14px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    #notify-btn:hover:not([disabled]) { background: rgba(255, 255, 255, 0.22); }
+    #notify-btn[data-state="granted"] {
+      background: #FFFFFF;
+      color: var(--theme-ink);
+      border-color: #FFFFFF;
+    }
+    #notify-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+    /* ───── Main / Screens ───── */
+    #app-main {
+      flex: 1;
+      padding: 0 22px 100px;
+      overflow-y: auto;
+    }
+    .screen {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 12px 0;
+    }
+    body[data-screen="home"]  #screen-tasks,
+    body[data-screen="home"]  #screen-stats,
+    body[data-screen="tasks"] #screen-home,
+    body[data-screen="tasks"] #screen-stats,
+    body[data-screen="stats"] #screen-home,
+    body[data-screen="stats"] #screen-tasks { display: none; }
+
+    .screen-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .screen-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0;
+      color: var(--color-text-primary);
+    }
+    .today {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      font-weight: 600;
+    }
+
+    /* ───── Timer ring ───── */
+    .timer-ring-wrap {
+      width: 240px;
+      height: 240px;
+      margin: 12px auto 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .timer-ring-wrap svg { width: 100%; height: 100%; display: block; }
+    #progress-ring {
+      stroke: #FFFFFF;
+      transition: stroke-dashoffset 0.25s linear;
+    }
+    #timer-display {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      fill: #FFFFFF;
+      letter-spacing: -0.02em;
+    }
+    @keyframes ring-pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .timer-ring-wrap.pulsing { animation: ring-pulse 0.6s ease; }
+
+    /* ───── Focusing on ───── */
+    .focusing-on {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      min-height: 42px;
+    }
+    .focusing-on .label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      color: var(--color-text-muted);
+    }
+    .focusing-on .task-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+    .focusing-on[data-empty="true"] .label { visibility: hidden; }
+    .focusing-on[data-empty="true"] .task-name {
+      color: var(--color-text-muted);
+      font-weight: 400;
+      font-size: 13px;
+    }
+
+    /* ───── Timer controls (circular icon buttons) ───── */
+    .timer-controls {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+    .timer-controls button {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      color: var(--theme-ink);
+      border: 0;
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transition: transform 0.1s ease, box-shadow 0.15s ease;
+    }
+    .timer-controls button:active {
+      transform: scale(0.94);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    .timer-controls .btn-reset { font-size: 20px; }
+
+    /* ───── Mode dropdown ───── */
+    .mode-selector { display: flex; justify-content: center; }
+    #mode-select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-color: #FFFFFF;
+      color: var(--theme-ink);
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 38px 10px 22px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M5 6L0 0h10z' fill='%23666'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    #mode-select:focus { outline: 2px solid rgba(255, 255, 255, 0.55); outline-offset: 2px; }
+
+    /* ───── Session counter ───── */
+    .session-counter {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      font-size: 18px;
+      min-height: 1.5em;
+      flex-wrap: wrap;
+    }
+    .session-counter .pip.filled { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1)); }
+    .session-counter .pip-overflow {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      padding-left: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ───── Stats card ───── */
+    #stats-card {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .stat {
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 14px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      margin-top: 4px;
+    }
+
+    /* ───── Export button ───── */
+    #export-btn {
+      align-self: flex-end;
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    #export-btn:hover { background: rgba(255, 255, 255, 0.22); }
+
+    /* ───── Todo input ───── */
+    #todo-input-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    #todo-input-wrap input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 14px;
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.13);
+      outline: none;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    #todo-input-wrap input[type="text"]:focus {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.55);
+    }
+    #todo-input-wrap input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.55); }
+    #todo-input-wrap .btn-add {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      background: #FFFFFF;
+      color: var(--theme-ink);
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ───── Todo list ───── */
+    #todo-list, #completed-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    #todo-list { max-height: 320px; overflow-y: auto; }
+    #completed-list { max-height: 200px; overflow-y: auto; margin-top: 8px; }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      font-size: 14px;
+      color: #FFFFFF;
+      transition: background-color 0.2s ease;
+    }
+    .todo-item.active-todo {
+      background: rgba(255, 255, 255, 0.28);
+      border-left: 4px solid #FFFFFF;
+      padding-left: 10px;
+    }
+    .todo-item .todo-check {
+      width: 18px;
+      height: 18px;
+      accent-color: #FFFFFF;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .todo-item .todo-text {
+      flex: 1;
+      cursor: pointer;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .todo-item.completed .todo-text {
+      text-decoration: line-through;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: default;
+    }
+    .todo-item .todo-pomos {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.75);
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+    .todo-item .btn-delete {
+      background: transparent;
+      border: 0;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 8px;
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s ease, background-color 0.15s ease;
+      flex-shrink: 0;
+    }
+    .todo-item:hover .btn-delete,
+    .todo-item:focus-within .btn-delete { opacity: 1; }
+    .todo-item .btn-delete:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+    }
+    .todo-empty {
+      text-align: center;
+      color: var(--color-text-muted);
+      padding: 20px 12px;
+      font-size: 13px;
+    }
+
+    #completed-section {
+      border-top: 1px dashed rgba(255, 255, 255, 0.22);
+      padding-top: 12px;
+      margin-top: 4px;
+    }
+    #completed-section .completed-header {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    #completed-section.collapsed #completed-list { display: none; }
+
+    /* ───── Chart ───── */
+    .chart-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .chart-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+    .chart-summary {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      font-family: var(--font-mono);
+    }
+    .chart-bars {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      align-items: end;
+      height: 200px;
+      padding: 14px 6px 4px;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+    }
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      height: 100%;
+      min-width: 0;
+    }
+    .bar-value {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--color-text-muted);
+      min-height: 1em;
+      line-height: 1;
+    }
+    .bar {
+      width: 100%;
+      height: var(--bar-height, 0%);
+      min-height: 4px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 4px 4px 0 0;
+      transition: height 0.5s ease;
+      max-height: 140px;
+    }
+    .bar.bar-empty { background: rgba(255, 255, 255, 0.18); }
+    .bar.bar-today {
+      background: #FFFFFF;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+    }
+    .bar-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      letter-spacing: 0.04em;
+    }
+    .bar-col[data-today="true"] .bar-label { color: var(--color-text-primary); }
+
+    /* ───── Bottom nav ───── */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.13);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .bottom-nav button {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.55);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 4px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.2s ease;
+    }
+    .bottom-nav button .nav-icon { font-size: 20px; line-height: 1; }
+    .bottom-nav button .nav-label { font-size: 11px; font-weight: 700; letter-spacing: 0.03em; }
+    .bottom-nav button.active { color: #FFFFFF; }
+    .bottom-nav button:hover:not(.active) { color: rgba(255, 255, 255, 0.85); }
+
+    /* ───── Toast ───── */
+    #toast {
+      position: fixed;
+      left: 50%;
+      top: 16px;
+      transform: translate(-50%, -28px);
+      background: rgba(0, 0, 0, 0.85);
+      color: #FFFFFF;
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 100;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 380px) {
+      .timer-ring-wrap { width: 210px; height: 210px; }
+      .stat-value { font-size: 18px; }
+    }
+  </style>
+</head>
+<body data-mode="focus" data-screen="home">
+  <div class="phone-frame">
+    <header id="app-header">
+      <div class="brand">🍅 FocusFlow</div>
+      <div class="header-actions">
+        <div class="theme-switcher" role="radiogroup" aria-label="Theme">
+          <button type="button" data-theme="blue" class="theme-chip" title="Blue" aria-label="Blue theme"></button>
+          <button type="button" data-theme="red" class="theme-chip" title="Red" aria-label="Red theme"></button>
+          <button type="button" data-theme="teal" class="theme-chip" title="Teal" aria-label="Teal theme"></button>
+          <button type="button" data-theme="olive" class="theme-chip" title="Olive" aria-label="Olive theme"></button>
+        </div>
+        <button type="button" id="notify-btn" title="알림 설정" aria-label="Notification settings">🔔</button>
+      </div>
+    </header>
+
+    <main id="app-main">
+      <section id="screen-home" class="screen" aria-label="Pomodoro timer">
+        <div class="screen-title-row">
+          <h2 class="screen-title">Today</h2>
+          <span class="today" id="today-date">—</span>
+        </div>
+
+        <div class="timer-ring-wrap" aria-live="polite">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Timer progress">
+            <circle cx="100" cy="100" r="90" stroke="rgba(255,255,255,0.25)" stroke-width="6" fill="none" />
+            <circle
+              id="progress-ring"
+              cx="100" cy="100" r="90"
+              fill="none"
+              stroke-width="6"
+              stroke-linecap="round"
+              stroke-dasharray="565"
+              stroke-dashoffset="0"
+              transform="rotate(-90 100 100)"
+            />
+            <text
+              id="timer-display"
+              x="100" y="115"
+              text-anchor="middle"
+              font-size="44"
+              font-family="DM Mono, ui-monospace, monospace"
+            >25:00</text>
+          </svg>
+        </div>
+
+        <div class="focusing-on">
+          <div class="label">FOCUSING ON</div>
+          <div class="task-name" id="focusing-task">—</div>
+        </div>
+
+        <div class="timer-controls">
+          <button type="button" class="btn-start" title="시작 / 일시정지" aria-label="Start or pause timer">▶</button>
+          <button type="button" class="btn-reset" title="타이머 초기화" aria-label="Reset timer">↺</button>
+        </div>
+
+        <div class="mode-selector">
+          <select id="mode-select" aria-label="Timer mode">
+            <option value="focus">Pomodoro · 25min</option>
+            <option value="short">Short Break · 5min</option>
+            <option value="long">Long Break · 45min</option>
+          </select>
+        </div>
+
+        <div class="session-counter" aria-label="Completed focus sessions today"></div>
+      </section>
+
+      <section id="screen-tasks" class="screen" aria-label="Tasks">
+        <h2 class="screen-title">Tasks</h2>
+
+        <div id="stats-card">
+          <div class="stat">
+            <div class="stat-label">Sessions</div>
+            <div class="stat-value" id="stat-sessions">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Focus</div>
+            <div class="stat-value" id="stat-focus-time">0m</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Streak</div>
+            <div class="stat-value" id="stat-streak">🔥 0일</div>
+          </div>
+        </div>
+        <button type="button" id="export-btn" title="CSV 내보내기" aria-label="Export stats as CSV">📥 내보내기</button>
+
+        <div id="todo-input-wrap">
+          <input type="text" id="todo-input" placeholder="할 일을 입력하세요..." />
+          <button type="button" class="btn-add" aria-label="Add todo">+</button>
+        </div>
+
+        <ul id="todo-list" aria-label="Active todos"></ul>
+
+        <div id="completed-section">
+          <div class="completed-header">완료 (0)</div>
+          <ul id="completed-list"></ul>
+        </div>
+      </section>
+
+      <section id="screen-stats" class="screen" aria-label="Statistics">
+        <h2 class="screen-title">Stats</h2>
+
+        <div class="chart-header">
+          <span class="chart-title">📈 이번 주 집중 현황</span>
+          <span class="chart-summary">총 0세션 · 0m 집중</span>
+        </div>
+        <div class="chart-bars"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navigation">
+      <button type="button" data-screen="home" class="active">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button type="button" data-screen="tasks">
+        <span class="nav-icon">✅</span>
+        <span class="nav-label">Tasks</span>
+      </button>
+      <button type="button" data-screen="stats">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Stats</span>
+      </button>
+    </nav>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      // ───── Header date ─────
+      const dateEl = document.getElementById('today-date');
+      if (dateEl) {
+        const d = new Date();
+        const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+        dateEl.textContent =
+          (d.getMonth() + 1) + '/' + d.getDate() + ' (' + weekdays[d.getDay()] + ')';
+      }
+
+      // ───── Themes ─────
+      const THEMES = ['blue', 'red', 'teal', 'olive'];
+      const themeButtons = document.querySelectorAll('.theme-switcher button[data-theme]');
+
+      function applyTheme(themeName) {
+        const name = THEMES.indexOf(themeName) >= 0 ? themeName : 'blue';
+        document.documentElement.dataset.theme = name;
+        themeButtons.forEach((b) => {
+          b.classList.toggle('active', b.dataset.theme === name);
+        });
+        try { localStorage.setItem('focusflow_theme', name); } catch (_) {}
+      }
+
+      themeButtons.forEach((btn) => {
+        btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+      });
+
+      try {
+        applyTheme(localStorage.getItem('focusflow_theme') || 'blue');
+      } catch (_) { applyTheme('blue'); }
+
+      // ───── Bottom nav (screen switching) ─────
+      const navButtons = document.querySelectorAll('.bottom-nav button[data-screen]');
+      function applyScreen(name) {
+        document.body.dataset.screen = name;
+        navButtons.forEach((b) => b.classList.toggle('active', b.dataset.screen === name));
+      }
+      navButtons.forEach((btn) => {
+        btn.addEventListener('click', () => applyScreen(btn.dataset.screen));
+      });
+      applyScreen(document.body.dataset.screen || 'home');
+
+      // ───── Timer ─────
+      const MODES = {
+        focus: { label: 'Focus',       seconds: 1500 },
+        short: { label: 'Short Break', seconds: 300  },
+        long:  { label: 'Long Break',  seconds: 2700 },
+      };
+
+      const state = {
+        timer: {
+          mode: 'focus',
+          seconds: MODES.focus.seconds,
+          totalSeconds: MODES.focus.seconds,
+          isRunning: false,
+          intervalId: null,
+        },
+        todos: [],
+        currentTodoId: null,
+        stats: {
+          todaySessions: 0,
+          todayFocusMin: 0,
+          weeklyData: {},
+        },
+      };
+
+      const CIRCUMFERENCE = 565;
+
+      const ring = document.getElementById('progress-ring');
+      const timerDisplay = document.getElementById('timer-display');
+      const ringWrap = document.querySelector('.timer-ring-wrap');
+      const startBtn = document.querySelector('.btn-start');
+      const resetBtn = document.querySelector('.btn-reset');
+      const modeSelect = document.getElementById('mode-select');
+      const toastEl = document.getElementById('toast');
+      const statSessionsEl = document.getElementById('stat-sessions');
+      const statFocusTimeEl = document.getElementById('stat-focus-time');
+      const statStreakEl = document.getElementById('stat-streak');
+
+      function formatTime(total) {
+        const safe = Math.max(0, total | 0);
+        const m = Math.floor(safe / 60);
+        const s = safe % 60;
+        return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      }
+
+      function updateRing(secondsLeft, totalSeconds) {
+        const progress = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
+        ring.style.strokeDashoffset = String(CIRCUMFERENCE * (1 - progress));
+        timerDisplay.textContent = formatTime(secondsLeft);
+      }
+
+      function updateTitle() {
+        document.title = state.timer.isRunning
+          ? formatTime(state.timer.seconds) + ' | FocusFlow'
+          : '🍅 FocusFlow';
+      }
+
+      function setStartButtonLabel() {
+        startBtn.textContent = state.timer.isRunning ? '⏸' : '▶';
+      }
+
+      function startTimer() {
+        if (state.timer.isRunning) return;
+        state.timer.isRunning = true;
+        setStartButtonLabel();
+        state.timer.intervalId = setInterval(tick, 1000);
+        updateTitle();
+      }
+
+      function pauseTimer() {
+        if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+        state.timer.intervalId = null;
+        state.timer.isRunning = false;
+        setStartButtonLabel();
+        updateTitle();
+      }
+
+      function resetTimer() {
+        if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+        state.timer.intervalId = null;
+        state.timer.isRunning = false;
+        state.timer.seconds = state.timer.totalSeconds;
+        updateRing(state.timer.seconds, state.timer.totalSeconds);
+        setStartButtonLabel();
+        updateTitle();
+      }
+
+      function switchMode(modeName) {
+        if (!MODES[modeName]) return;
+        state.timer.mode = modeName;
+        state.timer.totalSeconds = MODES[modeName].seconds;
+        state.timer.seconds = MODES[modeName].seconds;
+        document.body.dataset.mode = modeName;
+        if (modeSelect) modeSelect.value = modeName;
+        resetTimer();
+        saveToStorage();
+      }
+
+      function tick() {
+        state.timer.seconds--;
+        updateRing(state.timer.seconds, state.timer.totalSeconds);
+        updateTitle();
+        if (state.timer.seconds <= 0) completeSession();
+      }
+
+      function completeSession() {
+        if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+        state.timer.intervalId = null;
+        state.timer.isRunning = false;
+        document.title = '🍅 FocusFlow';
+
+        const finished = state.timer.mode;
+
+        if (finished === 'focus') {
+          const key = todayKey();
+          const focusMinutes = MODES.focus.seconds / 60;
+          const day = state.stats.weeklyData[key] || { sessions: 0, focusMinutes: 0 };
+          day.sessions += 1;
+          day.focusMinutes += focusMinutes;
+          state.stats.weeklyData[key] = day;
+          state.stats.todaySessions = day.sessions;
+          state.stats.todayFocusMin = day.focusMinutes;
+
+          if (state.currentTodoId) {
+            const t = state.todos.find((td) => td.id === state.currentTodoId);
+            if (t) t.pomodoroCount = (t.pomodoroCount || 0) + 1;
+          }
+
+          saveToStorage();
+          renderStats();
+          renderSessionCounter();
+          renderTodoList();
+          renderChart();
+        }
+
+        showToast(finished === 'focus'
+          ? '🍅 집중 세션 완료! 잠시 쉬어가요.'
+          : '✨ 휴식 끝! 다시 집중해볼까요?'
+        );
+        pulseRing();
+        playBeep();
+        showSessionNotification(finished);
+
+        const next = finished === 'focus' ? 'short' : 'focus';
+        switchMode(next);
+      }
+
+      function renderSessionCounter() {
+        const counter = document.querySelector('.session-counter');
+        if (!counter) return;
+        const n = state.stats.todaySessions;
+        const shown = Math.min(n, 8);
+        let html = '';
+        for (let i = 0; i < shown; i++) html += '<span class="pip filled">🍅</span>';
+        if (n > 8) html += '<span class="pip-overflow">+' + (n - 8) + '</span>';
+        counter.innerHTML = html;
+      }
+
+      function renderChart() {
+        const wrap = document.querySelector('#screen-stats .chart-bars');
+        const summaryEl = document.querySelector('#screen-stats .chart-summary');
+        if (!wrap) return;
+
+        const dayLabels = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+        const now = new Date();
+        const todayK = todayKey();
+
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          const key = d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+          const entry = state.stats.weeklyData[key] || { sessions: 0, focusMinutes: 0 };
+          days.push({
+            label: dayLabels[d.getDay()],
+            sessions: entry.sessions,
+            focusMinutes: entry.focusMinutes,
+            isToday: key === todayK,
+          });
+        }
+
+        const maxSessions = Math.max.apply(null, days.map((d) => d.sessions).concat(1));
+        const totalSessions = days.reduce((s, d) => s + d.sessions, 0);
+        const totalMinutes = days.reduce((s, d) => s + d.focusMinutes, 0);
+
+        wrap.innerHTML = days.map((d) => {
+          const pct = d.sessions === 0 ? 0 : (d.sessions / maxSessions) * 100;
+          const cls = ['bar'];
+          if (d.sessions === 0) cls.push('bar-empty');
+          if (d.isToday) cls.push('bar-today');
+          return (
+            '<div class="bar-col" data-today="' + (d.isToday ? 'true' : 'false') + '">' +
+              '<div class="bar-value">' + (d.sessions > 0 ? d.sessions : '') + '</div>' +
+              '<div class="' + cls.join(' ') + '" style="--bar-height: ' + pct + '%"></div>' +
+              '<div class="bar-label">' + d.label + '</div>' +
+            '</div>'
+          );
+        }).join('');
+
+        if (summaryEl) {
+          summaryEl.textContent = '총 ' + totalSessions + '세션 · ' + totalMinutes + 'm 집중';
+        }
+      }
+
+      function todayKey() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+      }
+
+      function calculateStreak() {
+        let streak = 0;
+        const now = new Date();
+        for (let i = 0; i < 30; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          const key = d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+          const entry = state.stats.weeklyData[key];
+          if (entry && entry.sessions > 0) streak++;
+          else break;
+        }
+        return streak;
+      }
+
+      function renderStats() {
+        if (statSessionsEl) statSessionsEl.textContent = String(state.stats.todaySessions);
+        if (statFocusTimeEl) statFocusTimeEl.textContent = state.stats.todayFocusMin + 'm';
+        if (statStreakEl) statStreakEl.textContent = '🔥 ' + calculateStreak() + '일';
+      }
+
+      function pulseRing() {
+        if (!ringWrap) return;
+        ringWrap.classList.remove('pulsing');
+        void ringWrap.offsetWidth;
+        ringWrap.classList.add('pulsing');
+      }
+
+      let toastTimeout = null;
+      function showToast(message) {
+        if (!toastEl) return;
+        toastEl.textContent = message;
+        toastEl.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2000);
+      }
+
+      // ───── Sound + Notifications ─────
+      const notifyBtn = document.getElementById('notify-btn');
+      let audioCtx = null;
+      let permissionRequested = false;
+
+      function notifSupport() { return 'Notification' in window; }
+      function notifPerm() { return notifSupport() ? Notification.permission : 'unsupported'; }
+
+      function updateNotifyButton() {
+        if (!notifyBtn) return;
+        const perm = notifPerm();
+        notifyBtn.dataset.state = perm;
+        if (perm === 'granted') {
+          notifyBtn.textContent = '🔔';
+          notifyBtn.title = '알림 활성화됨';
+          notifyBtn.disabled = false;
+        } else if (perm === 'denied') {
+          notifyBtn.textContent = '🔕';
+          notifyBtn.title = '브라우저 설정에서 알림을 허용해주세요';
+          notifyBtn.disabled = true;
+        } else if (perm === 'unsupported') {
+          notifyBtn.textContent = '🔕';
+          notifyBtn.title = '이 브라우저는 알림을 지원하지 않습니다';
+          notifyBtn.disabled = true;
+        } else {
+          notifyBtn.textContent = '🔔';
+          notifyBtn.title = '클릭하여 세션 완료 알림 켜기';
+          notifyBtn.disabled = false;
+        }
+      }
+
+      function requestNotificationPermission() {
+        if (!notifSupport() || Notification.permission !== 'default') {
+          updateNotifyButton();
+          return;
+        }
+        try {
+          const ret = Notification.requestPermission(() => updateNotifyButton());
+          if (ret && typeof ret.then === 'function') {
+            ret.then(updateNotifyButton).catch(updateNotifyButton);
+          }
+        } catch (_) { updateNotifyButton(); }
+      }
+
+      function maybeAutoRequestPermission() {
+        if (permissionRequested) return;
+        permissionRequested = true;
+        if (notifPerm() === 'default') requestNotificationPermission();
+      }
+
+      function ensureAudioContext() {
+        if (audioCtx) {
+          if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+          return audioCtx;
+        }
+        const Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return null;
+        try {
+          audioCtx = new Ctor();
+          if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+        } catch (_) { audioCtx = null; }
+        return audioCtx;
+      }
+
+      function playBeep() {
+        const ctx = ensureAudioContext();
+        if (!ctx) return;
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = 440;
+          const now = ctx.currentTime;
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.32);
+        } catch (_) {}
+      }
+
+      function showSessionNotification(finished) {
+        if (notifPerm() !== 'granted') return;
+        try {
+          const title = finished === 'focus' ? '🍅 집중 세션 완료!' : '✨ 휴식 끝!';
+          const body = finished === 'focus'
+            ? '잠시 쉬어가요. 휴식이 자동으로 시작됩니다.'
+            : '다시 집중해볼까요?';
+          const n = new Notification(title, { body, tag: 'focusflow-session' });
+          n.onclick = () => {
+            try { window.focus(); } catch (_) {}
+            n.close();
+          };
+        } catch (_) {}
+      }
+
+      if (notifyBtn) {
+        notifyBtn.addEventListener('click', () => {
+          const perm = notifPerm();
+          if (perm === 'default') {
+            permissionRequested = true;
+            requestNotificationPermission();
+          } else if (perm === 'granted') {
+            showToast('알림이 활성화되어 있습니다.');
+          } else if (perm === 'denied') {
+            showToast('브라우저 주소창의 자물쇠에서 알림을 허용해주세요.');
+          }
+        });
+      }
+      updateNotifyButton();
+
+      // ───── CSV export ─────
+      function exportCsv() {
+        const data = state.stats.weeklyData;
+        const keys = Object.keys(data).sort();
+        if (keys.length === 0) {
+          showToast('내보낼 통계가 아직 없어요.');
+          return;
+        }
+        const lines = ['날짜,세션수,집중시간(분)'];
+        keys.forEach((k) => {
+          const e = data[k] || { sessions: 0, focusMinutes: 0 };
+          lines.push(k + ',' + e.sessions + ',' + e.focusMinutes);
+        });
+        const csv = String.fromCharCode(0xFEFF) + lines.join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'focusflow-stats-' + todayKey() + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('CSV 파일을 다운로드했어요.');
+      }
+
+      const exportBtn = document.getElementById('export-btn');
+      if (exportBtn) exportBtn.addEventListener('click', exportCsv);
+
+      // ───── Todos ─────
+      const todoInput = document.getElementById('todo-input');
+      const todoAddBtn = document.querySelector('#todo-input-wrap .btn-add');
+      const todoListEl = document.getElementById('todo-list');
+      const completedListEl = document.getElementById('completed-list');
+      const completedSectionEl = document.getElementById('completed-section');
+      const completedHeaderEl = completedSectionEl.querySelector('.completed-header');
+      const focusingOnEl = document.querySelector('.focusing-on');
+      const focusingTaskEl = document.getElementById('focusing-task');
+
+      function saveToStorage() {
+        try {
+          localStorage.setItem('focusflow_todos', JSON.stringify(state.todos));
+          localStorage.setItem('focusflow_timer', JSON.stringify({
+            mode: state.timer.mode,
+            currentTodoId: state.currentTodoId,
+          }));
+          localStorage.setItem('focusflow_stats', JSON.stringify(state.stats.weeklyData));
+        } catch (_) {}
+      }
+
+      function loadFromStorage() {
+        try {
+          const rawTodos = localStorage.getItem('focusflow_todos');
+          if (rawTodos) state.todos = JSON.parse(rawTodos) || [];
+        } catch (_) { state.todos = []; }
+
+        let savedMode = state.timer.mode;
+        try {
+          const rawTimer = localStorage.getItem('focusflow_timer');
+          if (rawTimer) {
+            const parsed = JSON.parse(rawTimer) || {};
+            if (parsed.mode && MODES[parsed.mode]) savedMode = parsed.mode;
+            if (parsed.currentTodoId &&
+                state.todos.some((t) => t.id === parsed.currentTodoId && !t.completed)) {
+              state.currentTodoId = parsed.currentTodoId;
+            }
+          }
+        } catch (_) {}
+
+        try {
+          const rawStats = localStorage.getItem('focusflow_stats');
+          if (rawStats) state.stats.weeklyData = JSON.parse(rawStats) || {};
+        } catch (_) { state.stats.weeklyData = {}; }
+
+        const cutoff = Date.now() - 30 * 24 * 3600 * 1000;
+        Object.keys(state.stats.weeklyData).forEach((k) => {
+          const t = new Date(k + 'T00:00:00').getTime();
+          if (!Number.isFinite(t) || t < cutoff) {
+            delete state.stats.weeklyData[k];
+          }
+        });
+
+        const today = state.stats.weeklyData[todayKey()] || { sessions: 0, focusMinutes: 0 };
+        state.stats.todaySessions = today.sessions;
+        state.stats.todayFocusMin = today.focusMinutes;
+
+        switchMode(savedMode);
+        renderTodoList();
+        renderFocusingOn();
+        renderStats();
+        renderSessionCounter();
+        renderChart();
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function renderItem(todo) {
+        const isActive = todo.id === state.currentTodoId && !todo.completed;
+        const cls = 'todo-item' +
+          (todo.completed ? ' completed' : '') +
+          (isActive ? ' active-todo' : '');
+        const checked = todo.completed ? 'checked' : '';
+        const pomos = todo.pomodoroCount > 0
+          ? '<span class="todo-pomos">🍅×' + todo.pomodoroCount + '</span>'
+          : '';
+        return (
+          '<li class="' + cls + '" data-id="' + todo.id + '">' +
+            '<input type="checkbox" class="todo-check" ' + checked + ' aria-label="Toggle complete" />' +
+            '<span class="todo-text">' + escapeHtml(todo.text) + '</span>' +
+            pomos +
+            '<button type="button" class="btn-delete" aria-label="Delete">×</button>' +
+          '</li>'
+        );
+      }
+
+      function renderTodoList() {
+        const active = state.todos.filter((t) => !t.completed);
+        const done = state.todos.filter((t) => t.completed);
+        todoListEl.innerHTML = active.length === 0
+          ? '<li class="todo-empty">할 일을 추가해보세요 🌱</li>'
+          : active.map(renderItem).join('');
+        completedListEl.innerHTML = done.map(renderItem).join('');
+        completedHeaderEl.textContent = '완료 (' + done.length + '개)';
+      }
+
+      function renderFocusingOn() {
+        const current = state.todos.find(
+          (t) => t.id === state.currentTodoId && !t.completed
+        );
+        if (current) {
+          focusingOnEl.dataset.empty = 'false';
+          focusingTaskEl.textContent = current.text;
+        } else {
+          focusingOnEl.dataset.empty = 'true';
+          focusingTaskEl.textContent = '할 일을 선택하면 여기에 표시됩니다';
+        }
+      }
+
+      function addTodo(text) {
+        const t = (text || '').trim();
+        if (!t) return;
+        state.todos.unshift({
+          id: crypto.randomUUID(),
+          text: t,
+          completed: false,
+          createdAt: new Date().toISOString().slice(0, 10),
+          pomodoroCount: 0,
+        });
+        saveToStorage();
+        renderTodoList();
+        if (todoInput) {
+          todoInput.value = '';
+          todoInput.focus();
+        }
+      }
+
+      function toggleTodo(id) {
+        const todo = state.todos.find((t) => t.id === id);
+        if (!todo) return;
+        todo.completed = !todo.completed;
+        if (todo.completed && state.currentTodoId === id) {
+          state.currentTodoId = null;
+        }
+        saveToStorage();
+        renderTodoList();
+        renderFocusingOn();
+      }
+
+      function deleteTodo(id) {
+        state.todos = state.todos.filter((t) => t.id !== id);
+        if (state.currentTodoId === id) state.currentTodoId = null;
+        saveToStorage();
+        renderTodoList();
+        renderFocusingOn();
+      }
+
+      function selectTodo(id) {
+        state.currentTodoId = (state.currentTodoId === id) ? null : id;
+        saveToStorage();
+        renderTodoList();
+        renderFocusingOn();
+      }
+
+      // ───── Event bindings ─────
+      if (modeSelect) {
+        modeSelect.addEventListener('change', () => switchMode(modeSelect.value));
+      }
+      startBtn.addEventListener('click', () => {
+        ensureAudioContext();
+        maybeAutoRequestPermission();
+        if (state.timer.isRunning) pauseTimer();
+        else startTimer();
+      });
+      resetBtn.addEventListener('click', resetTimer);
+
+      todoAddBtn.addEventListener('click', () => addTodo(todoInput.value));
+      todoInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addTodo(todoInput.value);
+        }
+      });
+
+      function handleTodoEvent(e) {
+        const item = e.target.closest('.todo-item');
+        if (!item) return;
+        const id = item.dataset.id;
+        if (e.type === 'change' && e.target.classList.contains('todo-check')) {
+          toggleTodo(id);
+          return;
+        }
+        if (e.type === 'click') {
+          if (e.target.classList.contains('btn-delete')) {
+            deleteTodo(id);
+          } else if (
+            e.target.classList.contains('todo-text') &&
+            !item.classList.contains('completed')
+          ) {
+            selectTodo(id);
+          }
+        }
+      }
+      todoListEl.addEventListener('click', handleTodoEvent);
+      todoListEl.addEventListener('change', handleTodoEvent);
+      completedListEl.addEventListener('click', handleTodoEvent);
+      completedListEl.addEventListener('change', handleTodoEvent);
+
+      completedHeaderEl.addEventListener('click', () => {
+        completedSectionEl.classList.toggle('collapsed');
+      });
+
+      loadFromStorage();
+    })();
+  </script>
+</body>
+</html>
