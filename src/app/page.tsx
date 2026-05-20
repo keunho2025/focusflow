@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 
 type TodoCategory = "work" | "project" | "personal" | "learning" | "health";
@@ -93,19 +94,26 @@ const ALL_AI_NEWS: News[] = [
   { id: "ai-12", title: "챗봇 기술로 고객 만족도 상승", category: "ai", date: "3일전", icon: "💬", url: "https://news.naver.com/section/105" },
 ];
 
+const SAMSUNG_URL = "https://finance.naver.com/item/main.naver?code=005930";
+const HYNIX_URL = "https://finance.naver.com/item/main.naver?code=000660";
+const HYUNDAI_URL = "https://finance.naver.com/item/main.naver?code=005380";
+
 const ALL_STOCK_NEWS: News[] = [
-  { id: "stock-1", title: "테크 기업들 실적 개선, 지수 2.5% 상승", category: "stock", date: "오늘", icon: "📈", url: "https://finance.naver.com/" },
-  { id: "stock-2", title: "AI 관련 주식 급등, 시가총액 신기록", category: "stock", date: "어제", icon: "💰", url: "https://finance.naver.com/" },
-  { id: "stock-3", title: "반도체주, 실적 기대감에 상승", category: "stock", date: "2일전", icon: "🔌", url: "https://finance.naver.com/" },
-  { id: "stock-4", title: "엔비디아, GPU 수요로 주가 급등", category: "stock", date: "3일전", icon: "🚀", url: "https://finance.naver.com/" },
-  { id: "stock-5", title: "코스피, 3000선 회복 기대", category: "stock", date: "오늘", icon: "📊", url: "https://finance.naver.com/" },
-  { id: "stock-6", title: "배당주 매력도 증가, 기관 매수", category: "stock", date: "어제", icon: "💵", url: "https://finance.naver.com/" },
-  { id: "stock-7", title: "전기차 업체, 올해 실적 호조", category: "stock", date: "2일전", icon: "🚗", url: "https://finance.naver.com/" },
-  { id: "stock-8", title: "금융주 실적 개선, 투자자 관심 증대", category: "stock", date: "3일전", icon: "🏦", url: "https://finance.naver.com/" },
-  { id: "stock-9", title: "바이오 기업, 신약 개발 성공 기대", category: "stock", date: "오늘", icon: "🧪", url: "https://finance.naver.com/" },
-  { id: "stock-10", title: "전자 기업 신제품 공개, 주가 상승", category: "stock", date: "어제", icon: "📱", url: "https://finance.naver.com/" },
-  { id: "stock-11", title: "에너지주, 유가 상승에 수혜", category: "stock", date: "2일전", icon: "⛽", url: "https://finance.naver.com/" },
-  { id: "stock-12", title: "통신주, 5G 본격 가입에 기대", category: "stock", date: "3일전", icon: "📡", url: "https://finance.naver.com/" },
+  // 삼성전자
+  { id: "stock-ss-1", title: "삼성전자, HBM3E 양산 본격화에 3.2% 상승", category: "stock", date: "오늘", icon: "📈", url: SAMSUNG_URL },
+  { id: "stock-ss-2", title: "삼성전자, 외국인 매수세 유입 1.8% 강세", category: "stock", date: "어제", icon: "💹", url: SAMSUNG_URL },
+  { id: "stock-ss-3", title: "삼성전자, 반도체 실적 둔화 우려에 1.5% 하락", category: "stock", date: "2일전", icon: "📉", url: SAMSUNG_URL },
+  { id: "stock-ss-4", title: "삼성전자, 자사주 매입 발표로 2.4% 반등", category: "stock", date: "3일전", icon: "🔼", url: SAMSUNG_URL },
+  // SK하이닉스
+  { id: "stock-sk-1", title: "SK하이닉스, AI 메모리 수요 폭증에 4.5% 급등", category: "stock", date: "오늘", icon: "🚀", url: HYNIX_URL },
+  { id: "stock-sk-2", title: "SK하이닉스, 엔비디아 공급 확대 호재 2.7% 상승", category: "stock", date: "어제", icon: "📈", url: HYNIX_URL },
+  { id: "stock-sk-3", title: "SK하이닉스, 차익실현 매물에 0.9% 약보합", category: "stock", date: "2일전", icon: "📊", url: HYNIX_URL },
+  { id: "stock-sk-4", title: "SK하이닉스, DDR5 가격 인상 소식에 3.1% 강세", category: "stock", date: "3일전", icon: "💹", url: HYNIX_URL },
+  // 현대자동차
+  { id: "stock-hd-1", title: "현대자동차, 美 전기차 판매 호조 2.6% 상승", category: "stock", date: "오늘", icon: "🚗", url: HYUNDAI_URL },
+  { id: "stock-hd-2", title: "현대자동차, 분기 영업이익 사상 최대치 3.4% 급등", category: "stock", date: "어제", icon: "📈", url: HYUNDAI_URL },
+  { id: "stock-hd-3", title: "현대자동차, 환율 부담에 1.2% 하락 마감", category: "stock", date: "2일전", icon: "📉", url: HYUNDAI_URL },
+  { id: "stock-hd-4", title: "현대자동차, 배당 확대 발표로 1.9% 반등", category: "stock", date: "3일전", icon: "🔼", url: HYUNDAI_URL },
 ];
 
 function getRandomNews(newsArray: News[]): News[] {
@@ -120,8 +128,6 @@ function getModes(settings: TimerSettings): Record<TimerMode, { label: string; s
     long: { label: `Long Break · ${settings.longBreakMinutes}min`, seconds: settings.longBreakMinutes * 60 },
   };
 }
-
-const CIRCUMFERENCE = 565;
 
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -143,8 +149,8 @@ export default function Home() {
   const [timerSettings, setTimerSettings] = useState<TimerSettings>(DEFAULT_SETTINGS);
   const [mode, setMode] = useState<TimerMode>("focus");
   const [secondsLeft, setSecondsLeft] = useState(DEFAULT_SETTINGS.focusMinutes * 60);
-  const [totalSeconds, setTotalSeconds] = useState(DEFAULT_SETTINGS.focusMinutes * 60);
   const [isRunning, setIsRunning] = useState(false);
+  const [clockNow, setClockNow] = useState(() => new Date());
   const [todos, setTodos] = useState<Todo[]>([]);
   const [todoInput, setTodoInput] = useState("");
   const [todoDueDate, setTodoDueDate] = useState("");
@@ -159,6 +165,9 @@ export default function Home() {
   const [todayFocusMin, setTodayFocusMin] = useState(0);
   const [mounted, setMounted] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const fadingOutRef = useRef(false);
+  const fadeRafRef = useRef<number | null>(null);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [skillInput, setSkillInput] = useState("");
@@ -167,14 +176,16 @@ export default function Home() {
   const [skillGoalHours, setSkillGoalHours] = useState(0);
   const [skillsTab, setSkillsTab] = useState<"list" | "add">("list");
   const [selectedSkillFilter, setSelectedSkillFilter] = useState<SkillCategory | "all">("all");
-  const [currentAINews, setCurrentAINews] = useState<News[]>([]);
-  const [currentStockNews, setCurrentStockNews] = useState<News[]>([]);
+  const [currentAINews, setCurrentAINews] = useState<News[]>(() => getRandomNews(ALL_AI_NEWS));
+  const [currentStockNews, setCurrentStockNews] = useState<News[]>(() => getRandomNews(ALL_STOCK_NEWS));
   const [isLocked, setIsLocked] = useState(true);
   const [pinSetupStep, setPinSetupStep] = useState<"setup" | "confirm" | "unlock">("unlock");
   const [pinInput, setPinInput] = useState("");
   const [pinFirstEntry, setPinFirstEntry] = useState("");
   const [pinError, setPinError] = useState("");
   const [pinShake, setPinShake] = useState(false);
+
+  const MODES = getModes(timerSettings);
 
   useEffect(() => {
     const savedTodos = localStorage.getItem("todos");
@@ -184,6 +195,7 @@ export default function Home() {
 
     if (savedTodos) {
       const parsed = JSON.parse(savedTodos);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTodos(parsed.map((todo: Todo) => ({
         ...todo,
         category: todo.category || "personal",
@@ -242,7 +254,6 @@ export default function Home() {
       const settings = JSON.parse(savedSettings) as TimerSettings;
       setTimerSettings(settings);
       setSecondsLeft(settings.focusMinutes * 60);
-      setTotalSeconds(settings.focusMinutes * 60);
     }
 
     if (savedSkills) {
@@ -313,11 +324,9 @@ export default function Home() {
   }, [skills, mounted]);
 
   useEffect(() => {
-    if (mounted) {
-      setCurrentAINews(getRandomNews(ALL_AI_NEWS));
-      setCurrentStockNews(getRandomNews(ALL_STOCK_NEWS));
-    }
-  }, [mounted]);
+    const clockInterval = setInterval(() => setClockNow(new Date()), 1000);
+    return () => clearInterval(clockInterval);
+  }, []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -330,14 +339,11 @@ export default function Home() {
   }, [mounted]);
 
   const selectedTodo = todos.find((t) => t.id === selectedId && !t.completed);
-  const progress = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
-  const strokeDashOffset = CIRCUMFERENCE * (1 - progress);
 
   function switchMode(newMode: TimerMode) {
     const modes = getModes(timerSettings);
     setMode(newMode);
     setSecondsLeft(modes[newMode].seconds);
-    setTotalSeconds(modes[newMode].seconds);
     setIsRunning(false);
   }
 
@@ -383,7 +389,8 @@ export default function Home() {
   }
 
   function playNotification() {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const audioContext = new AudioContextClass();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     oscillator.connect(gainNode);
@@ -426,13 +433,83 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, mode]);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || isLocked) return;
+
+    const cancelFade = () => {
+      if (fadeRafRef.current !== null) {
+        cancelAnimationFrame(fadeRafRef.current);
+        fadeRafRef.current = null;
+      }
+    };
+
+    const fadeTo = (target: number, duration: number) => {
+      cancelFade();
+      const start = performance.now();
+      const startOpacity = parseFloat(video.style.opacity || "0");
+
+      const step = (now: number) => {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const value = startOpacity + (target - startOpacity) * progress;
+        video.style.opacity = String(value);
+        if (progress < 1) {
+          fadeRafRef.current = requestAnimationFrame(step);
+        } else {
+          fadeRafRef.current = null;
+        }
+      };
+
+      fadeRafRef.current = requestAnimationFrame(step);
+    };
+
+    const onLoadedData = () => {
+      fadingOutRef.current = false;
+      fadeTo(1, 500);
+    };
+
+    const onTimeUpdate = () => {
+      if (fadingOutRef.current) return;
+      if (video.duration && video.duration - video.currentTime <= 0.55) {
+        fadingOutRef.current = true;
+        fadeTo(0, 500);
+      }
+    };
+
+    const onEnded = () => {
+      cancelFade();
+      video.style.opacity = "0";
+      setTimeout(() => {
+        video.currentTime = 0;
+        video.play().catch(() => {});
+        fadingOutRef.current = false;
+        fadeTo(1, 500);
+      }, 100);
+    };
+
+    video.addEventListener("loadeddata", onLoadedData);
+    video.addEventListener("timeupdate", onTimeUpdate);
+    video.addEventListener("ended", onEnded);
+
+    if (video.readyState >= 2) {
+      onLoadedData();
+    }
+
+    return () => {
+      cancelFade();
+      video.removeEventListener("loadeddata", onLoadedData);
+      video.removeEventListener("timeupdate", onTimeUpdate);
+      video.removeEventListener("ended", onEnded);
+    };
+  }, [isLocked]);
+
   function startTimer() { setIsRunning(true); }
   function pauseTimer() { setIsRunning(false); }
   function resetTimer() {
     const modes = getModes(timerSettings);
     setIsRunning(false);
     setSecondsLeft(modes[mode].seconds);
-    setTotalSeconds(modes[mode].seconds);
   }
 
   function selectTodo(id: string) {
@@ -572,14 +649,7 @@ export default function Home() {
   );
   const completedTodos = todos.filter((t) => t.completed);
 
-  function getGreeting() {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 18) return "Good Afternoon";
-    return "Good Evening";
-  }
 
-  const MODES = getModes(timerSettings);
 
   if (isLocked) {
     const PIN_KEYS = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
@@ -671,13 +741,23 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen w-screen flex flex-col font-sans"
-      style={{
-        background: "linear-gradient(135deg, #b3e5fc 0%, #81d4fa 25%, #a5d6ff 50%, #80deea 75%, #4dd0e1 100%)",
-      }}
+      className="min-h-screen w-screen flex flex-col font-sans overflow-hidden relative"
+      style={{ background: "#000" }}
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/10 backdrop-blur-xs" />
+      {/* Background video — all screens */}
+      <video
+        ref={videoRef}
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_115001_bcdaa3b4-03de-47e7-ad63-ae3e392c32d4.mp4"
+        autoPlay
+        muted
+        playsInline
+        preload="auto"
+        className="absolute inset-0 w-full h-full object-cover translate-y-[17%] pointer-events-none"
+        style={{ opacity: 0 }}
+      />
+
+      {/* Overlay — dark cinematic on all screens */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
 
       {/* Main Content */}
       <div className="relative flex-1 flex flex-col w-full h-screen overflow-hidden pb-20">
@@ -693,10 +773,12 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3">
                   {session?.user?.image ? (
-                    <img
+                    <Image
                       src={session.user.image}
                       alt="profile"
-                      className="w-8 h-8 rounded-full border-2 border-white/80 shadow-sm"
+                      width={32}
+                      height={32}
+                      className="rounded-full border-2 border-white/80 shadow-sm"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-slate-400 flex items-center justify-center text-white text-xs font-bold">
@@ -728,7 +810,7 @@ export default function Home() {
               <div className="space-y-3 sm:space-y-4 min-w-0">
                 {/* Today's Stats Card */}
                 <div className="bg-white/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-widest">📊 TODAY'S PROGRESS</h3>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-widest">📊 TODAY&apos;S PROGRESS</h3>
                   <div className="space-y-2 sm:space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm sm:text-base text-slate-600 font-medium">Sessions</span>
@@ -745,7 +827,7 @@ export default function Home() {
                 <div className="bg-white/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-3">
                   <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-widest">📂 BY CATEGORY</h3>
                   <div className="space-y-1 sm:space-y-2">
-                    {Object.entries(CATEGORIES).map(([key, { label, icon, color }]) => {
+                    {Object.entries(CATEGORIES).map(([key, { label, icon }]) => {
                       const count = activeTodos.filter((t) => t.category === key).length;
                       return (
                         <div key={key} className="flex justify-between items-center text-xs sm:text-sm">
@@ -822,75 +904,134 @@ export default function Home() {
 
               {/* RIGHT COLUMN - Timer & Controls */}
               <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-6">
-                {/* Analog Clock */}
-                <div className="relative w-32 h-32 sm:w-48 sm:h-48">
-                  <svg viewBox="0 0 200 200" className="w-full h-full">
-                    {/* Clock Face */}
-                    <circle cx="100" cy="100" r="95" fill="rgba(255,255,255,0.95)" stroke="white" strokeWidth="3" />
+                {/* Vintage Alarm Clock */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-48 h-60 sm:w-60 sm:h-72">
+                    <svg viewBox="0 0 280 330" className="w-full h-full">
+                      <defs>
+                        <radialGradient id="alarmFace" cx="40%" cy="35%" r="70%">
+                          <stop offset="0%" stopColor="#ffffff" />
+                          <stop offset="100%" stopColor="#f0f0f0" />
+                        </radialGradient>
+                        <radialGradient id="alarmCase" cx="30%" cy="25%" r="70%">
+                          <stop offset="0%" stopColor="#3d3d3d" />
+                          <stop offset="55%" stopColor="#1c1c1c" />
+                          <stop offset="100%" stopColor="#080808" />
+                        </radialGradient>
+                        <radialGradient id="alarmBell" cx="35%" cy="28%" r="65%">
+                          <stop offset="0%" stopColor="#4a4a4a" />
+                          <stop offset="55%" stopColor="#222" />
+                          <stop offset="100%" stopColor="#0e0e0e" />
+                        </radialGradient>
+                      </defs>
 
-                    {/* Hour Markers */}
-                    {mounted && [...Array(12)].map((_, i) => {
-                      const angle = (i * 30 - 90) * (Math.PI / 180);
-                      const x1 = 100 + 80 * Math.cos(angle);
-                      const y1 = 100 + 80 * Math.sin(angle);
-                      const x2 = 100 + 90 * Math.cos(angle);
-                      const y2 = 100 + 90 * Math.sin(angle);
-                      return (
-                        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#1a5f7a" strokeWidth="2" />
-                      );
-                    })}
+                      {/* === BELLS === */}
+                      <ellipse cx="82" cy="82" rx="43" ry="32" fill="url(#alarmBell)" stroke="#3a3a3a" strokeWidth="2" />
+                      <ellipse cx="70" cy="70" rx="13" ry="9" fill="white" opacity="0.1" />
+                      <ellipse cx="198" cy="82" rx="43" ry="32" fill="url(#alarmBell)" stroke="#3a3a3a" strokeWidth="2" />
+                      <ellipse cx="186" cy="70" rx="13" ry="9" fill="white" opacity="0.1" />
+                      <rect x="115" y="54" width="50" height="13" rx="6.5" fill="#252525" stroke="#444" strokeWidth="1" />
+                      <line x1="140" y1="67" x2="140" y2="84" stroke="#777" strokeWidth="3" strokeLinecap="round" />
+                      <circle cx="140" cy="86" r="5.5" fill="#888" stroke="#555" strokeWidth="1" />
 
-                    {/* Center Dot */}
-                    <circle cx="100" cy="100" r="5" fill="#1a5f7a" />
+                      {/* === CLOCK CASE === */}
+                      <circle cx="143" cy="202" r="116" fill="rgba(0,0,0,0.28)" />
+                      <circle cx="140" cy="198" r="116" fill="url(#alarmCase)" />
+                      <circle cx="140" cy="198" r="116" fill="none" stroke="#666" strokeWidth="3" opacity="0.5" />
+                      <circle cx="140" cy="198" r="110" fill="#0d0d0d" />
+                      <circle cx="140" cy="198" r="106" fill="#181818" />
+                      <circle cx="140" cy="198" r="102" fill="url(#alarmFace)" stroke="#ddd" strokeWidth="0.5" />
 
-                    {mounted && (() => {
-                      // Calculate hand angles
-                      const minutes = Math.floor(secondsLeft / 60);
-                      const seconds = secondsLeft % 60;
-
-                      // Minute hand (0-360 degrees based on elapsed time)
-                      const elapsedSeconds = totalSeconds - secondsLeft;
-                      const minuteAngle = (elapsedSeconds / totalSeconds) * 360 - 90;
-
-                      // Second hand (0-360 degrees for remaining seconds)
-                      const secondAngle = (seconds / 60) * 360 - 90;
-
-                      return (
-                        <>
-                          {/* Minute Hand */}
+                      {/* === TICK MARKS (60) === */}
+                      {mounted && [...Array(60)].map((_, i) => {
+                        const isHour = i % 5 === 0;
+                        const ang = (i * 6 - 90) * (Math.PI / 180);
+                        const r1 = isHour ? 85 : 93;
+                        return (
                           <line
-                            x1="100"
-                            y1="100"
-                            x2={100 + 60 * Math.cos((minuteAngle * Math.PI) / 180)}
-                            y2={100 + 60 * Math.sin((minuteAngle * Math.PI) / 180)}
-                            stroke="#1a5f7a"
-                            strokeWidth="6"
+                            key={i}
+                            x1={140 + r1 * Math.cos(ang)}
+                            y1={198 + r1 * Math.sin(ang)}
+                            x2={140 + 99 * Math.cos(ang)}
+                            y2={198 + 99 * Math.sin(ang)}
+                            stroke="#1a1a1a"
+                            strokeWidth={isHour ? 2.8 : 1}
                             strokeLinecap="round"
-                            className="transition-all duration-300"
                           />
+                        );
+                      })}
 
-                          {/* Second Hand */}
-                          <line
-                            x1="100"
-                            y1="100"
-                            x2={100 + 70 * Math.cos((secondAngle * Math.PI) / 180)}
-                            y2={100 + 70 * Math.sin((secondAngle * Math.PI) / 180)}
-                            stroke="#ef4444"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            className="transition-all duration-300"
-                          />
-                        </>
-                      );
-                    })()}
-                  </svg>
+                      {/* === NUMBERS 1–12 === */}
+                      {[...Array(12)].map((_, i) => {
+                        const num = i === 0 ? 12 : i;
+                        const ang = (i * 30 - 90) * (Math.PI / 180);
+                        return (
+                          <text
+                            key={i}
+                            x={140 + 74 * Math.cos(ang)}
+                            y={198 + 74 * Math.sin(ang)}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fontSize="15"
+                            fontWeight="800"
+                            fontFamily="Arial Black, Arial, sans-serif"
+                            fill="#111"
+                          >
+                            {num}
+                          </text>
+                        );
+                      })}
 
-                  {/* Time Display in Center */}
-                  <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5 sm:gap-1">
-                    <p className="text-2xl sm:text-3xl font-bold text-slate-700 tabular-nums">
+                      {/* Brand text */}
+                      <text x="140" y="173" textAnchor="middle" fontSize="8" fontWeight="700" fontFamily="Arial" fill="#666" letterSpacing="3">SHARP</text>
+                      <text x="140" y="226" textAnchor="middle" fontSize="6" fontFamily="Arial" fill="#aaa" letterSpacing="1">Quartz</text>
+
+                      {/* === HANDS (real current time) === */}
+                      {mounted && (() => {
+                        const h = clockNow.getHours() % 12;
+                        const m = clockNow.getMinutes();
+                        const s = clockNow.getSeconds();
+                        const hAng = ((h * 30 + m * 0.5) - 90) * (Math.PI / 180);
+                        const mAng = (m * 6 - 90) * (Math.PI / 180);
+                        const sAng = (s * 6 - 90) * (Math.PI / 180);
+                        const cx = 140, cy = 198;
+                        return (
+                          <>
+                            {/* Hour hand – dark green with luminous highlight */}
+                            <line x1={cx} y1={cy} x2={cx + 55 * Math.cos(hAng)} y2={cy + 55 * Math.sin(hAng)} stroke="#1c3d18" strokeWidth="10" strokeLinecap="round" />
+                            <line x1={cx} y1={cy} x2={cx + 55 * Math.cos(hAng)} y2={cy + 55 * Math.sin(hAng)} stroke="#3d7a32" strokeWidth="5" strokeLinecap="round" />
+                            {/* Minute hand – dark green with luminous highlight */}
+                            <line x1={cx} y1={cy} x2={cx + 80 * Math.cos(mAng)} y2={cy + 80 * Math.sin(mAng)} stroke="#1c3d18" strokeWidth="8" strokeLinecap="round" />
+                            <line x1={cx} y1={cy} x2={cx + 80 * Math.cos(mAng)} y2={cy + 80 * Math.sin(mAng)} stroke="#3d7a32" strokeWidth="3.5" strokeLinecap="round" />
+                            {/* Second hand – red with counterbalance tail */}
+                            <line
+                              x1={cx - 22 * Math.cos(sAng)} y1={cy - 22 * Math.sin(sAng)}
+                              x2={cx + 90 * Math.cos(sAng)} y2={cy + 90 * Math.sin(sAng)}
+                              stroke="#cc1111" strokeWidth="1.5" strokeLinecap="round"
+                            />
+                            <circle cx={cx} cy={cy} r="5" fill="#cc1111" />
+                            <circle cx={cx} cy={cy} r="2.5" fill="#ff5555" />
+                            {/* Center cap */}
+                            <circle cx={cx} cy={cy} r="7.5" fill="#222" stroke="#666" strokeWidth="1.5" />
+                            <circle cx={cx} cy={cy} r="3.5" fill="#555" />
+                          </>
+                        );
+                      })()}
+
+                      {/* === LEGS === */}
+                      <line x1="108" y1="308" x2="86" y2="328" stroke="#aaa" strokeWidth="4" strokeLinecap="round" />
+                      <line x1="172" y1="308" x2="194" y2="328" stroke="#aaa" strokeWidth="4" strokeLinecap="round" />
+                      <ellipse cx="84" cy="328" rx="6" ry="2.5" fill="#888" transform="rotate(-25,84,328)" />
+                      <ellipse cx="196" cy="328" rx="6" ry="2.5" fill="#888" transform="rotate(25,196,328)" />
+                    </svg>
+                  </div>
+
+                  {/* Timer countdown display */}
+                  <div className="text-center space-y-0.5">
+                    <p className="text-3xl sm:text-4xl font-bold text-white tabular-nums drop-shadow-lg tracking-wider">
                       {formatTime(secondsLeft)}
                     </p>
-                    <p className="text-xs text-slate-500 font-medium text-center px-2">{MODES[mode].label}</p>
+                    <p className="text-xs text-white/70 font-medium tracking-widest uppercase">{MODES[mode].label}</p>
                   </div>
                 </div>
 
@@ -970,31 +1111,31 @@ export default function Home() {
         {screen === "tasks" && (
           <div className="relative w-full flex-1 flex flex-col overflow-hidden pb-24">
             {/* Header */}
-            <div className="px-6 pt-6 pb-4 space-y-4 flex-shrink-0">
+            <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 space-y-2 sm:space-y-4 flex-shrink-0">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full border-2 border-slate-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-red-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-green-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-yellow-400"></div>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="hidden sm:block w-8 h-8 rounded-full border-2 border-slate-400"></div>
+                  <div className="hidden sm:block w-6 h-6 rounded-full bg-red-400"></div>
+                  <div className="hidden sm:block w-6 h-6 rounded-full bg-green-400"></div>
+                  <div className="hidden sm:block w-6 h-6 rounded-full bg-yellow-400"></div>
                   <button className="w-8 h-8 rounded-full bg-slate-400 text-white flex items-center justify-center text-sm">
                     🔔
                   </button>
                 </div>
               </div>
               <div className="flex justify-between items-baseline">
-                <h2 className="text-3xl font-bold text-slate-700">Tasks Timeline</h2>
-                <p className="text-slate-600 text-sm">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-700">Tasks Timeline</h2>
+                <p className="text-slate-600 text-xs sm:text-sm">
                   {new Date().toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", weekday: "short" })}
                 </p>
               </div>
             </div>
 
             {/* Category Filter Tabs */}
-            <div className="px-6 py-3 flex-shrink-0 bg-slate-50 border-b border-slate-200 overflow-x-auto">
+            <div className="px-4 sm:px-6 py-2 sm:py-3 flex-shrink-0 bg-slate-50 border-b border-slate-200 overflow-x-auto">
               <div className="flex gap-2 pb-2">
                 <button
                   onClick={() => setSelectedCategoryFilter("all")}
@@ -1023,7 +1164,7 @@ export default function Home() {
             </div>
 
             {/* Add Task Form */}
-            <div className="px-6 py-3 space-y-3 flex-shrink-0 bg-slate-50">
+            <div className="px-4 sm:px-6 py-2 sm:py-3 space-y-2 sm:space-y-3 flex-shrink-0 bg-slate-50">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -1031,17 +1172,17 @@ export default function Home() {
                   onChange={(e) => setTodoInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && addTodo()}
                   placeholder="새 할 일..."
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-white text-slate-700 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-300 text-sm border border-slate-200"
+                  className="flex-1 min-w-0 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-white text-slate-700 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-300 text-sm border border-slate-200"
                 />
                 <input
                   type="date"
                   value={todoDueDate}
                   onChange={(e) => setTodoDueDate(e.target.value)}
-                  className="px-3 py-2.5 rounded-lg bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 text-sm border border-slate-200"
+                  className="w-32 sm:w-auto px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 text-xs sm:text-sm border border-slate-200"
                 />
                 <button
                   onClick={addTodo}
-                  className="px-5 py-2.5 rounded-lg bg-blue-500 text-white font-bold hover:bg-blue-600 transition-all text-lg"
+                  className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-blue-500 text-white font-bold hover:bg-blue-600 transition-all text-lg flex-shrink-0"
                 >
                   +
                 </button>
@@ -1076,9 +1217,9 @@ export default function Home() {
             </div>
 
             {/* Timeline View */}
-            <div className="flex-1 overflow-auto px-6 py-4">
+            <div className="flex-1 overflow-auto px-4 sm:px-6 py-3 sm:py-4">
               {activeTodos.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {(() => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -1087,8 +1228,8 @@ export default function Home() {
 
                     return (
                       <>
-                        {/* Timeline Header */}
-                        <div className="sticky top-0 bg-white/80 backdrop-blur pb-2">
+                        {/* Timeline Header — desktop only */}
+                        <div className="hidden md:block sticky top-0 bg-white/80 backdrop-blur pb-2">
                           <div className="flex items-center">
                             <div className="w-32 flex-shrink-0 font-semibold text-slate-700 text-sm">Task</div>
                             <div className="flex-1 flex gap-1">
@@ -1114,7 +1255,7 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* Timeline Bars */}
+                        {/* Task rows */}
                         {activeTodos.map((todo) => {
                           const dueDate = new Date(todo.dueDate || today.toISOString().split('T')[0]);
                           dueDate.setHours(0, 0, 0, 0);
@@ -1123,85 +1264,135 @@ export default function Home() {
                           );
                           const isOverdue = daysUntilDue < 0;
                           const isToday = daysUntilDue === 0;
-                          const isPending = daysUntilDue > 0;
 
                           const category = CATEGORIES[todo.category] || CATEGORIES.personal;
                           const priority = PRIORITIES[todo.priority];
 
                           return (
-                            <div key={todo.id} className="flex items-center gap-2">
-                              <div className="w-32 flex-shrink-0">
-                                <div className="flex items-center gap-1.5">
+                            <div key={todo.id}>
+                              {/* Desktop: timeline row */}
+                              <div className="hidden md:flex items-center gap-2">
+                                <div className="w-32 flex-shrink-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <input
+                                      type="checkbox"
+                                      checked={false}
+                                      onChange={() => toggleTodo(todo.id)}
+                                      className="cursor-pointer accent-blue-400 w-4 h-4"
+                                    />
+                                    <span
+                                      className="text-2xl flex-shrink-0"
+                                      title={category.label}
+                                    >
+                                      {category.icon}
+                                    </span>
+                                    <span
+                                      className="text-xs font-medium text-slate-700 truncate cursor-pointer hover:underline"
+                                      onClick={() => selectTodo(todo.id)}
+                                    >
+                                      {todo.text}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex-1 relative h-8 bg-slate-100 rounded-lg overflow-hidden">
+                                  {daysUntilDue >= 0 && daysUntilDue < 31 && (
+                                    <div
+                                      className={`h-full rounded-lg transition-all ${
+                                        isOverdue
+                                          ? "bg-red-400"
+                                          : isToday
+                                          ? "bg-blue-500"
+                                          : "bg-blue-300"
+                                      }`}
+                                      style={{
+                                        width: `${((daysUntilDue + 1) / 31) * 100}%`,
+                                        minWidth: "24px",
+                                      }}
+                                      title={`Due: ${dueDate.toLocaleDateString()}`}
+                                    />
+                                  )}
+                                </div>
+
+                                <div className="w-16 flex-shrink-0 text-right">
+                                  <span className="text-xs font-semibold text-slate-600">
+                                    {daysUntilDue < 0 ? "기한초과" : daysUntilDue === 0 ? "오늘" : `${daysUntilDue}d`}
+                                  </span>
+                                </div>
+
+                                <span
+                                  className={`text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ${priority.color}`}
+                                  title={priority.label}
+                                >
+                                  {priority.icon}
+                                </span>
+
+                                {todo.pomodoroCount > 0 && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-semibold flex-shrink-0">
+                                    🍅{todo.pomodoroCount}
+                                  </span>
+                                )}
+
+                                <button
+                                  onClick={() => deleteTodo(todo.id)}
+                                  className="text-red-400 hover:text-red-600 text-lg flex-shrink-0"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+
+                              {/* Mobile: card layout */}
+                              <div className="md:hidden bg-white/90 rounded-xl p-3 border border-slate-200 shadow-sm">
+                                <div className="flex items-start gap-2">
                                   <input
                                     type="checkbox"
                                     checked={false}
                                     onChange={() => toggleTodo(todo.id)}
-                                    className="cursor-pointer accent-blue-400 w-4 h-4"
+                                    className="cursor-pointer accent-blue-400 w-4 h-4 mt-1 flex-shrink-0"
                                   />
-                                  <span
-                                    className="text-2xl flex-shrink-0"
-                                    title={category.label}
-                                  >
+                                  <span className="text-xl flex-shrink-0" title={category.label}>
                                     {category.icon}
                                   </span>
-                                  <span
-                                    className="text-xs font-medium text-slate-700 truncate cursor-pointer hover:underline"
-                                    onClick={() => selectTodo(todo.id)}
+                                  <div className="flex-1 min-w-0">
+                                    <p
+                                      className="text-sm font-medium text-slate-700 break-words cursor-pointer hover:underline"
+                                      onClick={() => selectTodo(todo.id)}
+                                    >
+                                      {todo.text}
+                                    </p>
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                      <span
+                                        className={`text-[11px] font-semibold px-1.5 py-0.5 rounded ${
+                                          isOverdue
+                                            ? "bg-red-100 text-red-700"
+                                            : isToday
+                                            ? "bg-blue-100 text-blue-700"
+                                            : "bg-slate-100 text-slate-600"
+                                        }`}
+                                      >
+                                        {isOverdue ? "기한초과" : isToday ? "오늘" : `D-${daysUntilDue}`}
+                                      </span>
+                                      <span
+                                        className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${priority.color}`}
+                                      >
+                                        {priority.icon} {priority.label}
+                                      </span>
+                                      {todo.pomodoroCount > 0 && (
+                                        <span className="text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold">
+                                          🍅 {todo.pomodoroCount}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => deleteTodo(todo.id)}
+                                    className="text-red-400 hover:text-red-600 text-lg flex-shrink-0"
+                                    aria-label="삭제"
                                   >
-                                    {todo.text}
-                                  </span>
+                                    ✕
+                                  </button>
                                 </div>
                               </div>
-
-                              {/* Timeline Bar */}
-                              <div className="flex-1 relative h-8 bg-slate-100 rounded-lg overflow-hidden">
-                                {daysUntilDue >= 0 && daysUntilDue < 31 && (
-                                  <div
-                                    className={`h-full rounded-lg transition-all ${
-                                      isOverdue
-                                        ? "bg-red-400"
-                                        : isToday
-                                        ? "bg-blue-500"
-                                        : "bg-blue-300"
-                                    }`}
-                                    style={{
-                                      width: `${((daysUntilDue + 1) / 31) * 100}%`,
-                                      minWidth: "24px",
-                                    }}
-                                    title={`Due: ${dueDate.toLocaleDateString()}`}
-                                  />
-                                )}
-                              </div>
-
-                              {/* Due Date Label */}
-                              <div className="w-16 flex-shrink-0 text-right">
-                                <span className="text-xs font-semibold text-slate-600">
-                                  {daysUntilDue < 0 ? "기한초과" : daysUntilDue === 0 ? "오늘" : `${daysUntilDue}d`}
-                                </span>
-                              </div>
-
-                              {/* Priority Badge */}
-                              <span
-                                className={`text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ${priority.color}`}
-                                title={priority.label}
-                              >
-                                {priority.icon}
-                              </span>
-
-                              {/* Pomodoro Count */}
-                              {todo.pomodoroCount > 0 && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-semibold flex-shrink-0">
-                                  🍅{todo.pomodoroCount}
-                                </span>
-                              )}
-
-                              {/* Delete Button */}
-                              <button
-                                onClick={() => deleteTodo(todo.id)}
-                                className="text-red-400 hover:text-red-600 text-lg flex-shrink-0"
-                              >
-                                ✕
-                              </button>
                             </div>
                           );
                         })}
@@ -1222,53 +1413,53 @@ export default function Home() {
         {screen === "stats" && (
           <div className="relative w-full flex-1 flex flex-col overflow-y-auto pb-24">
             {/* Header */}
-            <div className="px-6 pt-6 pb-4 space-y-4">
+            <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 space-y-2 sm:space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full border-2 border-slate-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-red-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-green-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-yellow-400"></div>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="hidden sm:block w-8 h-8 rounded-full border-2 border-slate-400"></div>
+                  <div className="hidden sm:block w-6 h-6 rounded-full bg-red-400"></div>
+                  <div className="hidden sm:block w-6 h-6 rounded-full bg-green-400"></div>
+                  <div className="hidden sm:block w-6 h-6 rounded-full bg-yellow-400"></div>
                   <button className="w-8 h-8 rounded-full bg-slate-400 text-white flex items-center justify-center text-sm">
                     🔔
                   </button>
                 </div>
               </div>
               <div className="flex justify-between items-baseline">
-                <h2 className="text-3xl font-bold text-slate-700">Statistics</h2>
-                <p className="text-slate-600 text-sm">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-700">Statistics</h2>
+                <p className="text-slate-600 text-xs sm:text-sm">
                   {new Date().toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", weekday: "short" })}
                 </p>
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 px-6 py-4 space-y-4 overflow-y-auto">
+            <div className="flex-1 px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4 overflow-y-auto">
               {/* Stats Cards */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-4 rounded-xl bg-blue-100 text-center">
-                  <div className="text-slate-600 text-xs font-semibold mb-2">SESSIONS</div>
-                  <div className="text-3xl font-bold text-blue-600">{todaySessions}</div>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="p-3 sm:p-4 rounded-xl bg-blue-100 text-center">
+                  <div className="text-slate-600 text-[10px] sm:text-xs font-semibold mb-1 sm:mb-2">SESSIONS</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600">{todaySessions}</div>
                 </div>
-                <div className="p-4 rounded-xl bg-green-100 text-center">
-                  <div className="text-slate-600 text-xs font-semibold mb-2">FOCUS</div>
-                  <div className="text-3xl font-bold text-green-600">
+                <div className="p-3 sm:p-4 rounded-xl bg-green-100 text-center">
+                  <div className="text-slate-600 text-[10px] sm:text-xs font-semibold mb-1 sm:mb-2">FOCUS</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-green-600">
                     {Math.round(todayFocusMin)}
-                    <span className="text-lg">m</span>
+                    <span className="text-base sm:text-lg">m</span>
                   </div>
                 </div>
-                <div className="p-4 rounded-xl bg-orange-100 text-center">
-                  <div className="text-slate-600 text-xs font-semibold mb-2">STREAK</div>
-                  <div className="text-3xl font-bold text-orange-600">🔥0d</div>
+                <div className="p-3 sm:p-4 rounded-xl bg-orange-100 text-center">
+                  <div className="text-slate-600 text-[10px] sm:text-xs font-semibold mb-1 sm:mb-2">STREAK</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-orange-600">🔥0d</div>
                 </div>
               </div>
 
               {/* Weekly Chart */}
-              <div className="p-6 rounded-xl bg-white/90 backdrop-blur-sm">
-                <div className="flex items-baseline justify-between mb-4">
+              <div className="p-4 sm:p-6 rounded-xl bg-white/90 backdrop-blur-sm">
+                <div className="flex items-baseline justify-between mb-3 sm:mb-4">
                   <div>
                     <p className="text-slate-700 font-semibold">이번 주 집중</p>
                     <p className="text-slate-600 text-sm mt-1">
@@ -1323,35 +1514,35 @@ export default function Home() {
         {screen === "settings" && (
           <div className="relative w-full flex-1 flex flex-col overflow-y-auto pb-24">
             {/* Header */}
-            <div className="px-6 pt-6 pb-4 space-y-4">
+            <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 space-y-2 sm:space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-600">🎯 FocusFlow</h1>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full border-2 border-slate-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-red-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-green-400"></div>
-                  <div className="w-6 h-6 rounded-full bg-yellow-400"></div>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="hidden sm:block w-8 h-8 rounded-full border-2 border-slate-400"></div>
+                  <div className="hidden sm:block w-6 h-6 rounded-full bg-red-400"></div>
+                  <div className="hidden sm:block w-6 h-6 rounded-full bg-green-400"></div>
+                  <div className="hidden sm:block w-6 h-6 rounded-full bg-yellow-400"></div>
                   <button className="w-8 h-8 rounded-full bg-slate-400 text-white flex items-center justify-center text-sm">
                     🔔
                   </button>
                 </div>
               </div>
               <div className="flex justify-between items-baseline">
-                <h2 className="text-3xl font-bold text-slate-700">Settings</h2>
-                <p className="text-slate-600 text-sm">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-700">Settings</h2>
+                <p className="text-slate-600 text-xs sm:text-sm">
                   {new Date().toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", weekday: "short" })}
                 </p>
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 px-6 py-4 space-y-4 overflow-y-auto">
-              <p className="text-slate-600 text-sm">타이머 시간을 커스터마이징하세요</p>
+            <div className="flex-1 px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4 overflow-y-auto">
+              <p className="text-slate-600 text-xs sm:text-sm">타이머 시간을 커스터마이징하세요</p>
 
               {/* Settings Card */}
-              <div className="rounded-xl bg-white/90 backdrop-blur-sm p-6 space-y-5">
+              <div className="rounded-xl bg-white/90 backdrop-blur-sm p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div>
                   <label className="text-sm font-semibold text-slate-700 block mb-2">Focus Time (minutes)</label>
                   <input
@@ -1397,7 +1588,7 @@ export default function Home() {
               </div>
 
               {/* PIN Settings Card */}
-              <div className="rounded-xl bg-white/90 backdrop-blur-sm p-6 space-y-3">
+              <div className="rounded-xl bg-white/90 backdrop-blur-sm p-4 sm:p-6 space-y-3">
                 <h3 className="text-sm font-bold text-slate-700">🔒 PIN 보안</h3>
                 <p className="text-xs text-slate-500">앱 잠금 PIN을 관리합니다</p>
                 <button
